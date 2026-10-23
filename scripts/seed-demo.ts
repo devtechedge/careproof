@@ -101,6 +101,18 @@ const DEMO_SITES: Array<{ label: string; url: string; key: string }> = [
 ];
 
 async function main() {
+  // Safety interlock: the seeder deletes and recreates the demo account.
+  // It must never run against the production database by accident.
+  const url = process.env.DATABASE_URL ?? "";
+  const dbName = (url.match(/\/([^\/?]+)(\?|$)/) ?? [])[1] ?? "";
+  const isProd = dbName === "careproof";
+  if (isProd && process.env.ALLOW_PROD_SEED !== "1") {
+    console.error(
+      `Refusing to seed: DATABASE_URL points at "${dbName}", which looks like production. Set ALLOW_PROD_SEED=1 to override deliberately.`
+    );
+    process.exit(1);
+  }
+
   const email = "demo@careproof.test";
   const existing = await prisma.account.findUnique({ where: { email } });
   if (existing) {
