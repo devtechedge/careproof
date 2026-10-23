@@ -20,6 +20,7 @@ export interface Account {
   contactEmail: string | null;
   plan: string;
   isDemo: boolean;
+  sessionId?: string;
 }
 
 export async function createSession(accountId: string): Promise<void> {
@@ -54,8 +55,9 @@ export async function currentAccount(): Promise<Account | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
+  const sessionId = tokenToId(token);
   const session = await prisma.session.findUnique({
-    where: { id: tokenToId(token) },
+    where: { id: sessionId },
     include: { account: true },
   });
   if (!session || session.expiresAt < new Date()) return null;
@@ -69,6 +71,16 @@ export async function currentAccount(): Promise<Account | null> {
     contactEmail: a.contactEmail,
     plan: a.plan,
     isDemo: a.isDemo,
+    sessionId,
   };
 }
 
+/** Deletes every session for the account except the given one (used after password change). */
+export async function destroyOtherSessions(
+  accountId: string,
+  keepSessionId: string
+): Promise<void> {
+  await prisma.session.deleteMany({
+    where: { accountId, id: { not: keepSessionId } },
+  });
+}

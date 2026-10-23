@@ -14,6 +14,20 @@ function fail(error: string) {
   return { ok: false as const, error };
 }
 
+const DEMO_READONLY_ERROR =
+  "The demo workspace is read-only so every visitor sees the same product. Create your own free account to try everything.";
+
+/** Returns an error result when the account is the shared read-only demo. */
+async function rejectDemo(accountId: string): Promise<{ ok: false; error: string } | null> {
+  const acct = await prisma.account.findUnique({
+    where: { id: accountId },
+    select: { isDemo: true },
+  });
+  if (!acct) return fail("Account not found.");
+  if (acct.isDemo) return fail(DEMO_READONLY_ERROR);
+  return null;
+}
+
 export async function createAccount(input: {
   email: string;
   password: string;
@@ -58,6 +72,8 @@ export async function addSite(
   label: string,
   url: string
 ): Promise<ServiceResult<{ siteId: string }>> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
   const account = await prisma.account.findUnique({ where: { id: accountId } });
   if (!account) return fail("Account not found.");
   const plan = planFor(account.plan);
@@ -78,6 +94,8 @@ export async function addSite(
 }
 
 export async function removeSite(accountId: string, siteId: string): Promise<ServiceResult> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
   const site = await prisma.site.findUnique({ where: { id: siteId } });
   if (!site || site.accountId !== accountId) return fail("Site not found.");
   await prisma.site.delete({ where: { id: siteId } });
@@ -120,6 +138,8 @@ export async function runChecksForSite(
   siteId: string,
   trigger: "manual" | "report" = "manual"
 ): Promise<ServiceResult<{ runId: string; outcomes: CheckOutcome[] }>> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
   const site = await prisma.site.findUnique({ where: { id: siteId } });
   if (!site || site.accountId !== accountId) return fail("Site not found.");
   const run = await prisma.checkRun.create({
@@ -149,19 +169,81 @@ export async function runChecksForSite(
   return { ok: true, data: { runId: run.id, outcomes } };
 }
 
-export async function latestOutcomesForSite(siteId: string): Promise<CheckOutcome[]> {
+/**
+ * Runs checks for at most `limit` sites, prioritizing never-checked sites and
+ * then the oldest observations. Serverless invocations must stay bounded, so
+ * large portfolios complete across several clicks ("Run again to continue").
+ */
+export async function runChecksBatch(
+  accountId: string,
+  limit = 5
+): Promise<ServiceResult<{ checked: number; remaining: number }>> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
+  const sites = await prisma.site.findMany({
+    where: { accountId },
+    select: {
+      id: true,
+      runs: { orderBy: { startedAt: "desc" }, take: 1, select: { startedAt: true } },
+    },
+  });
+  const ordered = sites
+    .map((s) => ({ id: s.id, last: s.runs[0]?.startedAt ?? null }))
+    .sort((a, b) => {
+      if (a.last === null && b.last === null) return 0;
+      if (a.last === null) return -1;
+      if (b.last === null) return 1;
+      return a.last.getTime() - b.last.getTime();
+    });
+  const batch = ordered.slice(0, limit);
+  for (const site of batch) {
+    await runChecksForSite(accountId, site.id, "manual");
+  }
+  return { ok: true, data: { checked: batch.length, remaining: ordered.length - batch.length } };
+}
+
+export interface LatestRun {
+  startedAt: Date;
+  outcomes: CheckOutcome[];
+}
+
+export async function latestRunForSite(siteId: string): Promise<LatestRun | null> {
   const run = await prisma.checkRun.findFirst({
     where: { siteId },
     orderBy: { startedAt: "desc" },
     include: { results: true },
   });
-  if (!run) return [];
-  return run.results.map((r) => ({
-    checkKey: r.checkKey,
-    status: r.status as CheckOutcome["status"],
-    value: r.value,
-    detail: r.detail,
-  }));
+  if (!run) return null;
+  return {
+    startedAt: run.startedAt,
+    outcomes: run.results.map((r) => ({
+      checkKey: r.checkKey,
+      status: r.status as CheckOutcome["status"],
+      value: r.value,
+      detail: r.detail,
+    })),
+  };
+}
+
+export const FRESHNESS = {
+  freshAfterMs: 24 * 60 * 60 * 1000,
+  recheckLimit: 4,
+  generationDeadlineMs: 25_000,
+  staleBannerAfterMs: 7 * 24 * 60 * 60 * 1000,
+} as const;
+
+/** Pure policy helper: should this site's observations be refreshed during report generation? */
+export function shouldRecheck(
+  now: number,
+  lastStartedAt: number | null,
+  recheckedCount: number,
+  generationStartedAt: number,
+  limits: typeof FRESHNESS = FRESHNESS
+): boolean {
+  if (recheckedCount >= limits.recheckLimit) return false;
+  if (now - generationStartedAt >= limits.generationDeadlineMs) return false;
+  if (lastStartedAt === null) return true;
+  return now - lastStartedAt > limits.freshAfterMs;
 }
 
 export async function generateReport(
@@ -169,6 +251,8 @@ export async function generateReport(
   period = currentPeriod(),
   agencyNote = ""
 ): Promise<ServiceResult<{ reportId: string; publicId: string }>> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
   const account = await prisma.account.findUnique({ where: { id: accountId } });
   if (!account) return fail("Account not found.");
   const plan = planFor(account.plan);
@@ -183,24 +267,35 @@ export async function generateReport(
   const sites = await prisma.site.findMany({ where: { accountId }, orderBy: { createdAt: "asc" } });
   if (sites.length === 0) return fail("Add at least one site before generating a report.");
 
+  const generationStart = Date.now();
+  let rechecked = 0;
   const items: Array<{
     siteLabel: string;
     siteUrl: string;
     overall: "pass" | "warn" | "fail";
     checksJson: string;
+    observedAt: Date;
+    fresh: boolean;
   }> = [];
+
   for (const site of sites) {
-    let outcomes = await latestOutcomesForSite(site.id);
-    if (outcomes.length === 0) {
-      const run = await runChecksForSite(accountId, site.id, "report");
-      if (!run.ok) continue;
-      outcomes = run.data.outcomes;
+    let run = await latestRunForSite(site.id);
+    if (shouldRecheck(Date.now(), run ? run.startedAt.getTime() : null, rechecked, generationStart)) {
+      const freshRun = await runChecksForSite(accountId, site.id, "report");
+      if (freshRun.ok) {
+        run = await latestRunForSite(site.id);
+        rechecked += 1;
+      }
     }
+    if (!run || run.outcomes.length === 0) continue;
     items.push({
       siteLabel: site.label,
       siteUrl: site.url,
-      overall: overallFor(outcomes),
-      checksJson: snapshotChecks(outcomes),
+      overall: overallFor(run.outcomes),
+      checksJson: snapshotChecks(run.outcomes),
+      observedAt: run.startedAt,
+      // observed during this generation window (allowing a small clock skew)
+      fresh: run.startedAt.getTime() >= generationStart - 1_000,
     });
   }
   if (items.length === 0) return fail("No checks could be run for these sites.");
@@ -213,16 +308,33 @@ export async function generateReport(
     contactEmail: account.contactEmail,
     isDemo: account.isDemo,
   });
-  const report = await prisma.report.create({
-    data: {
-      accountId,
-      publicId,
-      period,
-      agencyNote: cleanText(agencyNote, 600),
-      brandingJson,
-      status: "draft",
-      items: { create: items },
-    },
+  const note = cleanText(agencyNote, 600);
+
+  // Regenerating a draft for the same period replaces its items atomically
+  // (no duplicate drafts, no half-created reports). Published reports stay
+  // immutable snapshots.
+  const report = await prisma.$transaction(async (tx) => {
+    const existingDraft = await tx.report.findFirst({
+      where: { accountId, period, status: "draft" },
+    });
+    if (existingDraft) {
+      await tx.reportItem.deleteMany({ where: { reportId: existingDraft.id } });
+      return tx.report.update({
+        where: { id: existingDraft.id },
+        data: { agencyNote: note, brandingJson, items: { create: items } },
+      });
+    }
+    return tx.report.create({
+      data: {
+        accountId,
+        publicId,
+        period,
+        agencyNote: note,
+        brandingJson,
+        status: "draft",
+        items: { create: items },
+      },
+    });
   });
   return { ok: true, data: { reportId: report.id, publicId: report.publicId } };
 }
@@ -231,9 +343,23 @@ export async function publishReport(
   accountId: string,
   reportId: string
 ): Promise<ServiceResult> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
   const report = await prisma.report.findUnique({ where: { id: reportId } });
   if (!report || report.accountId !== accountId) return fail("Report not found.");
   await prisma.report.update({ where: { id: reportId }, data: { status: "published" } });
+  return { ok: true };
+}
+
+export async function unpublishReport(
+  accountId: string,
+  reportId: string
+): Promise<ServiceResult> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
+  const report = await prisma.report.findUnique({ where: { id: reportId } });
+  if (!report || report.accountId !== accountId) return fail("Report not found.");
+  await prisma.report.update({ where: { id: reportId }, data: { status: "draft" } });
   return { ok: true };
 }
 
@@ -242,8 +368,13 @@ export async function updateReportNote(
   reportId: string,
   note: string
 ): Promise<ServiceResult> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
   const report = await prisma.report.findUnique({ where: { id: reportId } });
   if (!report || report.accountId !== accountId) return fail("Report not found.");
+  if (report.status === "published") {
+    return fail("Published reports are immutable. Unpublish first to edit the note.");
+  }
   await prisma.report.update({
     where: { id: reportId },
     data: { agencyNote: cleanText(note, 600) },
@@ -284,8 +415,9 @@ export async function getReportForOwner(accountId: string, reportId: string) {
 }
 
 export async function getReportByPublicId(publicId: string) {
-  return prisma.report.findUnique({
-    where: { publicId },
+  // Only published reports are reachable via share links; unpublishing revokes access.
+  return prisma.report.findFirst({
+    where: { publicId, status: "published" },
     include: { items: true },
   });
 }
@@ -294,6 +426,8 @@ export async function updateBranding(
   accountId: string,
   input: { name?: string; accentColor?: string; logoUrl?: string | null; contactEmail?: string | null }
 ): Promise<ServiceResult> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
   const account = await prisma.account.findUnique({ where: { id: accountId } });
   if (!account) return fail("Account not found.");
   const data: Record<string, string | null> = {};
@@ -333,8 +467,11 @@ export async function updateBranding(
 export async function changePassword(
   accountId: string,
   currentPassword: string,
-  newPassword: string
+  newPassword: string,
+  keepSessionId?: string
 ): Promise<ServiceResult> {
+  const demo = await rejectDemo(accountId);
+  if (demo) return demo;
   const account = await prisma.account.findUnique({ where: { id: accountId } });
   if (!account) return fail("Account not found.");
   if (!(await verifyPassword(currentPassword, account.passwordHash))) {
@@ -347,5 +484,11 @@ export async function changePassword(
     where: { id: accountId },
     data: { passwordHash: await hashPassword(newPassword) },
   });
+  // Invalidate every other session (other devices, previously stolen tokens).
+  if (keepSessionId) {
+    await prisma.session.deleteMany({
+      where: { accountId, id: { not: keepSessionId } },
+    });
+  }
   return { ok: true };
 }
