@@ -4,11 +4,11 @@ Updated: 2026-10-24 (end of session 1).
 
 ## Blocked on Dev (approval needed)
 
-1. Deploy decision: where (Vercel project, new, separate from all existing projects) and under what domain. No deploy has happened.
-2. Sending outreach: 15-email batch in docs/outreach/ needs his read + approval + send (his email accounts).
+1. DONE 2026-10-24: deploy approved and live at https://careproof-tau.vercel.app (Vercel project `careproof`, git auto-deploy from main). Remaining choice: custom domain to buy/attach.
+2. Sending outreach: 15-email batch in docs/outreach/ needs his read + approval + send (his email accounts). Landing + sample report are now live to point people at.
 3. Community posts: any Reddit/FB group participation runs from his accounts with full-text approval.
 4. Payments: verify Lemon Squeezy + PayPal India eligibility for CareProof before any live checkout; alternative to re-check: Stripe India invite status.
-5. Name check: trademark/domain search for "CareProof" (or pick another name) before anything public.
+5. Name check: trademark/domain search for "CareProof" before paid launch (product is now public under this name).
 
 ## Next session (no approval needed, local only)
 

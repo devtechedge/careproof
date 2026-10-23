@@ -31,3 +31,8 @@ Days below assume start day D0 (to be set on approval).
 - Fact: 35/35 Vitest tests pass; eslint clean; `next build` green (all DB routes dynamic); production server smoke test on :3111 passed: /api/health ok+db up, landing shows seeded sample report link, /dashboard 307 to /login (auth guard), /r/<publicId> renders demo-branded report.
 - Fact: nothing external sent, posted, deployed, or paid.
 - Next gate: Dev approvals (deploy target, outreach batch, name/trademark check) before validation clock starts.
+
+### 2026-10-24 (deploy session)
+- Fact: deployed and verified live at https://careproof-tau.vercel.app - /api/health ok + db up, landing renders seeded sample report link, /dashboard 307s to /login, /r/<id> renders demo-branded report. Public repo https://github.com/devtechedge/careproof with full build history.
+- Fact: 35/35 tests green against the Neon `careproof_test` database; production build green; lint clean.
+- Still zero external contact: no outreach, no community posts. Metrics unchanged (0 conversations, 0 pilots, 0 MRR).

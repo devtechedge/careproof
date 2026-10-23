@@ -29,3 +29,15 @@ Append-only log. Each entry: date, decision, why, what would change it.
 12. NEXT.JS CONFIG: cacheComponents disabled (classic caching model) because every DB-backed page is force-dynamic; scaffold default (new cache model) conflicts with route-level dynamic exports. Prisma 7 pinned 7.10.1 (v8 is RC with peer conflicts); better-sqlite3 adapter loads fine on Windows ARM64 (verified 2026-10-24).
 
 13. URL GUARD SCOPE: block localhost/private IPv4/IPv6-literals/.local/.internal/.onion but NOT .example/.test TLDs. Reserved TLDs pose no SSRF risk and blocking them breaks labelled demo data; unresolvable hosts just fail checks honestly.
+
+## 2026-10-24 (deploy session)
+
+14. PUBLIC REPO per Dev's instruction: github.com/devtechedge/careproof, full granular build history (18 stage commits reconstructed pre-push since nothing had been published yet). No license file: source is visible to show progress, no reuse rights granted.
+
+15. DATABASE: dedicated `careproof` + `careproof_test` databases created on the existing Neon Postgres host (us-east-1) via the glm project's pulled connection string; no Neon API key exists on this machine. Isolation = separate databases, not a separate Neon project. Move to a dedicated Neon project before paid launch (same note pattern as HandoffKit).
+
+16. RUNTIME: pooled DATABASE_URL for the app, unpooled for `prisma db push` (DDL is blocked through the pooler). Vercel env targets production only for DATABASE_URL; previews intentionally fail DB access.
+
+17. DEPLOYED (Dev approved): https://careproof-tau.vercel.app (+ careproof-devtechedge1.vercel.app), Vercel project `careproof` team `devtechedge1`, git-linked to main (auto-deploy on push). Production demo workspace seeded.
+
+18. BUILD FIXES discovered by real deploys: `postinstall: prisma generate` (generated client is gitignored, Vercel build needs it) and `process.loadEnvFile()` inside lib/db.ts (import hoisting runs db.ts before scripts can load .env).

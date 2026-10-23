@@ -6,7 +6,7 @@ Separate project from HandoffKit (n8n handover packs). No shared code.
 
 ## Status (2026-10-24)
 
-MVP complete locally. 35 tests passing, lint clean, production build green, demo workspace seeded, production server smoke-tested. Not deployed. No outreach sent. Docs in `docs/`.
+Live: https://careproof-tau.vercel.app (Vercel, git auto-deploy from main). Repo: github.com/devtechedge/careproof (public, full build history). 35 tests passing, lint clean, production build green, production demo workspace seeded. No outreach sent yet. Docs in `docs/`.
 
 ## Stack
 
@@ -52,11 +52,9 @@ Uptime/HTTP status, TTFB, HTML weight, TLS certificate expiry (direct TLS read),
 - No email verification / password reset yet (add before paid launch).
 - Plan limits enforced locally from `lib/plans.ts`; no live billing.
 
-## Deploy path (needs approval first)
+## Deploy (already live)
 
-1. New Vercel project (separate from every existing project), env: `DATABASE_URL` (Neon Postgres), `SESSION_PEPPER`, `NEXT_PUBLIC_SITE_URL`.
-2. Flip Prisma provider to `postgresql`, regenerate client, `prisma db push` against Neon.
-3. `npm run db:seed` only if a live demo workspace is wanted.
+Vercel project `careproof` (team devtechedge1), git-linked to main: every push to main auto-deploys. Env: `DATABASE_URL` (Neon pooled, production target only), `SESSION_PEPPER`, `NEXT_PUBLIC_SITE_URL=https://careproof-tau.vercel.app`. Schema changes: `DATABASE_URL_UNPOOLED=... npx prisma db push` locally. The generated Prisma client is gitignored and rebuilt by `postinstall`.
 
 ## Legal
 
