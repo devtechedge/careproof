@@ -3,6 +3,7 @@
 Branded monthly website-care reports for web agencies: prove what the retainer pays for, on every client site, across every stack.
 
 [![Live Demo](https://img.shields.io/badge/live-demo-blue)](https://careproof-tau.vercel.app)
+[![CI](https://github.com/devtechedge/careproof/actions/workflows/ci.yml/badge.svg)](https://github.com/devtechedge/careproof/actions/workflows/ci.yml)
 [![Next.js](https://img.shields.io/badge/Next.js%2016-App%20Router-black)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
