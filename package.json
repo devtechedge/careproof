@@ -12,10 +12,10 @@
     "db:seed": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
-    "@prisma/adapter-better-sqlite3": "^7.10.1",
+    "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
-    "better-sqlite3": "^13.0.3",
     "next": "16.4.3",
+    "pg": "^8.23.1",
     "prisma": "^8.0.0-rc.27",
     "react": "19.3.0",
     "react-dom": "19.3.0"
@@ -23,6 +23,7 @@
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
