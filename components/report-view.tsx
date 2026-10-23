@@ -27,10 +27,10 @@ export interface ReportItemView {
 }
 
 const STATUS_STYLE: Record<CheckStatus, string> = {
-  pass: "bg-emerald-50 text-emerald-700",
-  warn: "bg-amber-50 text-amber-700",
-  fail: "bg-red-50 text-red-700",
-  info: "bg-slate-100 text-slate-600",
+  pass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+  warn: "bg-amber-500/10 text-amber-700 dark:text-amber-400 dark:text-amber-300",
+  fail: "bg-red-500/10 text-red-700 dark:text-red-300",
+  info: "bg-[var(--surface-2)] text-[var(--muted)]",
 };
 
 const STATUS_LABEL: Record<CheckStatus, string> = {
@@ -59,7 +59,7 @@ export function ReportItems({
 }) {
   const accent = branding.accentColor;
   return (
-    <div className="print-page rounded-xl border border-slate-200 bg-white p-8">
+    <div className="print-page rounded-xl border border-[var(--border)] bg-[var(--surface)] p-8">
       <div className="flex items-center justify-between border-b pb-6" style={{ borderColor: accent }}>
         <div className="flex items-center gap-3">
           {branding.logoUrl ? (
@@ -75,7 +75,7 @@ export function ReportItems({
           )}
           <div>
             <p className="font-bold leading-tight">{branding.name}</p>
-            <p className="text-xs text-slate-500">Website care report</p>
+            <p className="text-xs text-[var(--muted)]">Website care report</p>
           </div>
         </div>
         <p className="text-sm font-semibold" style={{ color: accent }}>
@@ -84,7 +84,7 @@ export function ReportItems({
       </div>
 
       {note ? (
-        <p className="mt-6 rounded-lg bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">{note}</p>
+        <p className="mt-6 rounded-lg bg-[var(--surface-2)] px-4 py-3 text-sm leading-6 text-[var(--ink)]">{note}</p>
       ) : null}
 
       {branding.isDemo ? (
@@ -94,14 +94,14 @@ export function ReportItems({
       ) : null}
 
       {staleCount > 0 ? (
-        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+        <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs leading-5 text-amber-700 dark:text-amber-400 dark:text-amber-300">
           {staleCount} of {items.length} site observation{staleCount === 1 ? "" : "s"} date back
           more than 7 days. Each site below shows exactly when its checks ran; treat older
           observations as a historical snapshot, not a statement of current health.
         </p>
       ) : null}
 
-      <p className="mt-4 text-xs leading-5 text-slate-500">
+      <p className="mt-4 text-xs leading-5 text-[var(--muted)]">
         Results below are point-in-time public observations (uptime, certificate, headers, links,
         registry data). They do not verify backups, software updates, or remediation work unless
         the agency documents it in the note above.
@@ -118,9 +118,9 @@ export function ReportItems({
             <section key={item.id} className="break-inside-avoid">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h3 className="font-semibold text-slate-900">{item.siteLabel}</h3>
-                  <p className="text-xs text-slate-500">{item.siteUrl}</p>
-                  <p className="text-xs text-slate-400">
+                  <h3 className="font-semibold text-[var(--ink)]">{item.siteLabel}</h3>
+                  <p className="text-xs text-[var(--muted)]">{item.siteUrl}</p>
+                  <p className="text-xs text-[var(--faint)]">
                     {observedLabel(item.observedAt)}
                     {item.fresh ? " - rechecked for this report" : ""}
                   </p>
@@ -129,19 +129,19 @@ export function ReportItems({
                   <span className={`rounded-full px-2 py-0.5 font-semibold ${STATUS_STYLE[item.overall]}`}>
                     {item.overall === "pass" ? "All healthy" : item.overall === "warn" ? "Attention needed" : "Issues found"}
                   </span>
-                  <span className="text-slate-500">
+                  <span className="text-[var(--muted)]">
                     {counts.pass} pass / {counts.warn} attention / {counts.fail} issues
                   </span>
                 </div>
               </div>
               <table className="mt-3 w-full text-sm">
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[var(--border)]">
                   {item.checks.map((check) => (
                     <tr key={check.checkKey}>
                       <td className="py-2 pr-2 align-top font-medium text-slate-800">
                         <CheckLabel checkKey={check.checkKey} />
                       </td>
-                      <td className="py-2 pr-2 align-top text-slate-700">{check.value}</td>
+                      <td className="py-2 pr-2 align-top text-[var(--ink)]">{check.value}</td>
                       <td className="py-2 align-top">
                         <span
                           className={`inline-block rounded px-1.5 py-0.5 text-[11px] font-bold ${STATUS_STYLE[check.status]}`}
@@ -158,7 +158,7 @@ export function ReportItems({
         })}
       </div>
 
-      <footer className="mt-8 border-t border-slate-100 pt-4 text-xs text-slate-400">
+      <footer className="mt-8 border-t border-[var(--border)] pt-4 text-xs text-[var(--faint)]">
         <p>
           Prepared by {branding.name}
           {branding.contactEmail ? ` - ${branding.contactEmail}` : ""}. Each check ran against the

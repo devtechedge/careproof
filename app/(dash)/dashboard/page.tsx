@@ -8,10 +8,10 @@ export const dynamic = "force-dynamic";
 
 function StatusPill({ status }: { status: "pass" | "warn" | "fail" | "info" }) {
   const map = {
-    pass: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    warn: "bg-amber-50 text-amber-700 border-amber-200",
-    fail: "bg-red-50 text-red-700 border-red-200",
-    info: "bg-slate-50 text-slate-600 border-slate-200",
+    pass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+    warn: "bg-amber-500/10 text-amber-700 dark:text-amber-400 dark:text-amber-300 border-amber-500/30",
+    fail: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30",
+    info: "bg-[var(--surface-2)] text-[var(--muted)] border-[var(--border)]",
   } as const;
   const label = { pass: "Healthy", warn: "Attention", fail: "Issue", info: "Not checked" };
   return (
@@ -36,7 +36,7 @@ export default async function DashboardPage({
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Your sites</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-[var(--muted)]">
             {sites.length} of {plan.siteLimit} sites on the {plan.name} plan.
           </p>
         </div>
@@ -44,7 +44,7 @@ export default async function DashboardPage({
           <form action={runAllChecksForm}>
             <button
               type="submit"
-              className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
             >
               Run checks (5 at a time)
             </button>
@@ -58,13 +58,13 @@ export default async function DashboardPage({
         </p>
       ) : null}
       {account.isDemo ? (
-        <p className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+        <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-700 dark:text-amber-400 dark:text-amber-300">
           You are in the shared demo workspace: everything is read-only so every visitor sees the
           same product. Create your own account to add sites and generate reports.
         </p>
       ) : null}
       {err ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+        <p className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-700 dark:text-red-300">
           {err}
         </p>
       ) : null}
@@ -72,10 +72,10 @@ export default async function DashboardPage({
       {account.isDemo ? null : (
       <form
         action={addSiteForm}
-        className="grid gap-3 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-[1fr_1fr_auto]"
+        className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:grid-cols-[1fr_1fr_auto]"
       >
         <div>
-          <label htmlFor="label" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="label" className="mb-1 block text-sm font-medium text-[var(--ink)]">
             Client or site label
           </label>
           <input
@@ -83,11 +83,11 @@ export default async function DashboardPage({
             name="label"
             required
             placeholder="Bakery Co"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+            className="w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-blue-600"
           />
         </div>
         <div>
-          <label htmlFor="url" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="url" className="mb-1 block text-sm font-medium text-[var(--ink)]">
             Site URL
           </label>
           <input
@@ -95,7 +95,7 @@ export default async function DashboardPage({
             name="url"
             required
             placeholder="https://bakeryco.com"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+            className="w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-blue-600"
           />
         </div>
         <div className="flex items-end">
@@ -110,13 +110,13 @@ export default async function DashboardPage({
       )}
 
       {sites.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
+        <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-10 text-center text-sm text-[var(--muted)]">
           No sites yet. Add the first client site above, then run checks.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+            <thead className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
               <tr>
                 <th className="px-4 py-3">Site</th>
                 <th className="px-4 py-3">Status</th>
@@ -125,17 +125,17 @@ export default async function DashboardPage({
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[var(--border)]">
               {sites.map((site) => (
                 <tr key={site.id}>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-slate-900">{site.label}</p>
-                    <p className="text-xs text-slate-500">{site.url}</p>
+                    <p className="font-medium text-[var(--ink)]">{site.label}</p>
+                    <p className="text-xs text-[var(--muted)]">{site.url}</p>
                   </td>
                   <td className="px-4 py-3">
                     <StatusPill status={site.lastStatus} />
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-[var(--muted)]">
                     {site.lastRunAt
                       ? new Date(site.lastRunAt).toLocaleString("en-US", {
                           dateStyle: "medium",
@@ -143,25 +143,25 @@ export default async function DashboardPage({
                         })
                       : "Never"}
                   </td>
-                  <td className="px-4 py-3 text-xs text-slate-600">
+                  <td className="px-4 py-3 text-xs text-[var(--muted)]">
                     {site.summary ? (
                       <span>
                         {site.summary.pass} pass, {site.summary.warn} warn, {site.summary.fail} fail
                       </span>
                     ) : (
-                      <span className="text-slate-400">Run checks first</span>
+                      <span className="text-[var(--faint)]">Run checks first</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     {account.isDemo ? (
-                      <span className="text-xs text-slate-400">Read-only</span>
+                      <span className="text-xs text-[var(--faint)]">Read-only</span>
                     ) : (
                     <div className="flex justify-end gap-2">
                       <form action={runChecksForm}>
                         <input type="hidden" name="siteId" value={site.id} />
                         <button
                           type="submit"
-                          className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                          className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
                         >
                           Run checks
                         </button>
@@ -185,14 +185,14 @@ export default async function DashboardPage({
         </div>
       )}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5">
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
         <h2 className="text-lg font-semibold">This month&apos;s report</h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-[var(--muted)]">
           Generates a branded report from the latest check results (runs fresh checks for any
           site that has none). Optionally add a note your clients will read at the top.
         </p>
         {account.isDemo ? (
-          <p className="mt-4 text-sm text-slate-500">
+          <p className="mt-4 text-sm text-[var(--muted)]">
             Report generation is disabled in the demo. The pre-generated sample report is on the Reports page.
           </p>
         ) : (
@@ -200,7 +200,7 @@ export default async function DashboardPage({
           <input
             name="note"
             placeholder="Note to clients, e.g. what you improved this month (optional)"
-            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+            className="flex-1 rounded-md border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-blue-600"
           />
           <button
             type="submit"

@@ -13,7 +13,7 @@ function FieldError({ error }: { error?: string }) {
 }
 
 const inputClass =
-  "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100";
+  "w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20";
 
 export function SignUpForm() {
   const [state, action, pending] = useActionState(authSignUp, undefined);
@@ -21,19 +21,19 @@ export function SignUpForm() {
     <form action={action} className="space-y-4">
       <FieldError error={state?.error} />
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="name">
+        <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="name">
           Agency or your name
         </label>
         <input id="name" name="name" required className={inputClass} placeholder="Northside Web Studio" />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">
+        <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="email">
           Email
         </label>
         <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">
+        <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="password">
           Password
         </label>
         <input
@@ -63,13 +63,13 @@ export function LogInForm() {
     <form action={action} className="space-y-4">
       <FieldError error={state?.error} />
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">
+        <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="email">
           Email
         </label>
         <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">
+        <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="password">
           Password
         </label>
         <input
@@ -97,7 +97,7 @@ export function PrintButton({ label }: { label: string }) {
     <button
       type="button"
       onClick={() => window.print()}
-      className="no-print rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+      className="no-print rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
     >
       {label}
     </button>
@@ -109,7 +109,7 @@ export function CopyButton({ text, label }: { text: string; label: string }) {
     <button
       type="button"
       onClick={() => navigator.clipboard?.writeText(text)}
-      className="no-print rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+      className="no-print rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
     >
       {label}
     </button>

@@ -6,7 +6,7 @@ export const metadata = { title: "Settings - CareProof" };
 export const dynamic = "force-dynamic";
 
 const inputClass =
-  "w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-600";
+  "w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm outline-none focus:border-blue-600";
 
 export default async function SettingsPage({
   searchParams,
@@ -21,7 +21,7 @@ export default async function SettingsPage({
     <div className="max-w-2xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-[var(--muted)]">
           {account.email} - {plan.name} plan ({plan.siteLimit} sites, {plan.reportLimitPerMonth} reports/month).
           Plan changes are manual during the pilot; reply to any CareProof email to switch.
         </p>
@@ -31,27 +31,27 @@ export default async function SettingsPage({
         <p className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{msg}</p>
       ) : null}
       {account.isDemo ? (
-        <p className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+        <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-700 dark:text-amber-400 dark:text-amber-300">
           The demo workspace is read-only: branding and password changes are disabled.
         </p>
       ) : null}
       {err ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{err}</p>
+        <p className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-700 dark:text-red-300">{err}</p>
       ) : null}
 
       {account.isDemo ? null : (
-      <form action={saveBrandingForm} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+      <form action={saveBrandingForm} className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
         <h2 className="font-semibold">Report branding</h2>
-        <p className="text-xs text-slate-500">Appears on every report you generate, including already published ones at render time for drafts.</p>
+        <p className="text-xs text-[var(--muted)]">Appears on every report you generate, including already published ones at render time for drafts.</p>
         <div>
-          <label htmlFor="name" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="name" className="mb-1 block text-sm font-medium text-[var(--ink)]">
             Display name
           </label>
           <input id="name" name="name" defaultValue={account.name} required className={inputClass} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="accentColor" className="mb-1 block text-sm font-medium text-slate-700">
+            <label htmlFor="accentColor" className="mb-1 block text-sm font-medium text-[var(--ink)]">
               Accent color
             </label>
             <input
@@ -59,11 +59,11 @@ export default async function SettingsPage({
               name="accentColor"
               type="color"
               defaultValue={account.accentColor}
-              className="h-10 w-full rounded-md border border-slate-300"
+              className="h-10 w-full rounded-md border border-[var(--border)]"
             />
           </div>
           <div>
-            <label htmlFor="contactEmail" className="mb-1 block text-sm font-medium text-slate-700">
+            <label htmlFor="contactEmail" className="mb-1 block text-sm font-medium text-[var(--ink)]">
               Contact email on reports (optional)
             </label>
             <input
@@ -76,7 +76,7 @@ export default async function SettingsPage({
           </div>
         </div>
         <div>
-          <label htmlFor="logoUrl" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="logoUrl" className="mb-1 block text-sm font-medium text-[var(--ink)]">
             Logo URL (optional, png/jpg/svg/webp)
           </label>
           <input
@@ -97,16 +97,16 @@ export default async function SettingsPage({
       )}
 
       {account.isDemo ? null : (
-      <form action={changePasswordForm} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
+      <form action={changePasswordForm} className="space-y-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-6">
         <h2 className="font-semibold">Change password</h2>
         <div>
-          <label htmlFor="currentPassword" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="currentPassword" className="mb-1 block text-sm font-medium text-[var(--ink)]">
             Current password
           </label>
           <input id="currentPassword" name="currentPassword" type="password" required className={inputClass} />
         </div>
         <div>
-          <label htmlFor="newPassword" className="mb-1 block text-sm font-medium text-slate-700">
+          <label htmlFor="newPassword" className="mb-1 block text-sm font-medium text-[var(--ink)]">
             New password
           </label>
           <input
@@ -120,7 +120,7 @@ export default async function SettingsPage({
         </div>
         <button
           type="submit"
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
         >
           Change password
         </button>

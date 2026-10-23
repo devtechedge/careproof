@@ -34,7 +34,7 @@ export default async function ReportDetailPage({
 
   const overallTone =
     overall === "pass"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
       : overall === "warn"
         ? "border-amber-200 bg-amber-50 text-amber-800"
         : "border-red-200 bg-red-50 text-red-800";
@@ -46,7 +46,7 @@ export default async function ReportDetailPage({
           <h1 className="text-2xl font-bold tracking-tight">
             {periodLabel(report.period)} report
           </h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-[var(--muted)]">
             {items.length} sites - generated{" "}
             {new Date(report.createdAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
           </p>
@@ -56,7 +56,7 @@ export default async function ReportDetailPage({
           <a
             href={`/r/${report.publicId}`}
             target="_blank"
-            className="no-print rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="no-print rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
           >
             Open report
           </a>
@@ -81,7 +81,7 @@ export default async function ReportDetailPage({
                   <input type="hidden" name="publicId" value={report.publicId} />
                   <button
                     type="submit"
-                    className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
                   >
                     Unpublish
                   </button>
@@ -100,9 +100,9 @@ export default async function ReportDetailPage({
           : ""}
       </div>
 
-      <form action={saveNoteForm} className="no-print rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="text-sm font-semibold text-slate-900">Note to clients</h2>
-        <p className="mt-1 text-xs text-slate-500">
+      <form action={saveNoteForm} className="no-print rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+        <h2 className="text-sm font-semibold text-[var(--ink)]">Note to clients</h2>
+        <p className="mt-1 text-xs text-[var(--muted)]">
           Appears at the top of the report. Plain text, max 600 characters.
           {report.status === "published" ? " Published reports are immutable; unpublish to edit." : ""}
         </p>
@@ -113,12 +113,12 @@ export default async function ReportDetailPage({
           defaultValue={report.agencyNote}
           disabled={report.status === "published" || account.isDemo}
           placeholder="This month we updated plugins on all WordPress sites and renewed the SSL certificate for Bakery Co."
-          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 disabled:bg-slate-50 disabled:text-slate-500"
+          className="mt-2 w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-blue-600 disabled:bg-[var(--surface-2)] disabled:text-[var(--faint)]"
         />
         <button
           type="submit"
           disabled={report.status === "published" || account.isDemo}
-          className="mt-2 rounded-md border border-slate-300 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          className="mt-2 rounded-md border border-[var(--border)] px-4 py-1.5 text-xs font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)] disabled:opacity-50"
         >
           Save note
         </button>

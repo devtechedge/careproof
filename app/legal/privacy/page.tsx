@@ -1,10 +1,15 @@
+import { ThemeToggle } from "@/components/theme-toggle";
+
 export const metadata = { title: "Privacy Policy - CareProof" };
 
 export default function PrivacyPage() {
   return (
-    <div className="mx-auto max-w-2xl px-6 py-12 text-sm leading-6 text-slate-700">
-      <h1 className="text-2xl font-bold text-slate-900">Privacy Policy</h1>
-      <p className="mt-2 text-xs text-amber-700">
+    <div className="relative mx-auto max-w-2xl px-6 py-12 text-sm leading-6 text-[var(--ink)]">
+      <div className="fixed right-4 top-4 z-10">
+        <ThemeToggle />
+      </div>
+      <h1 className="text-2xl font-bold text-[var(--ink)]">Privacy Policy</h1>
+      <p className="mt-2 text-xs text-amber-700 dark:text-amber-400">
         TEMPLATE - review with a professional before launch. Not legal advice.
       </p>
       <div className="mt-6 space-y-4">

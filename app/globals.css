@@ -1,8 +1,35 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: var(--bg);
+  --foreground: var(--ink);
+  color-scheme: light;
+  /* light: cool titanium silver + ink */
+  --bg: #e9edf3;
+  --surface: #fcfdff;
+  --surface-2: #eff3f8;
+  --ink: #101828;
+  --muted: #46536a;
+  --faint: #7d8899;
+  --border: #d5dce6;
+  --accent: #2563eb;
+  --scroll-thumb: #9aa7b8;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  /* dark: cool slate */
+  --bg: #0b1220;
+  --surface: #121b2d;
+  --surface-2: #0e1626;
+  --ink: #e3e9f2;
+  --muted: #98a4b8;
+  --faint: #64748b;
+  --border: #22304a;
+  --accent: #3b82f6;
+  --scroll-thumb: #32476a;
 }
 
 @theme inline {
@@ -13,11 +40,68 @@
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--ink);
+}
+
+/* overlay hover-reveal scrollbars: thin, invisible until the pointer is over that pane.
+   The document bar (html) keeps a thin visible thumb; native touch behaviour is untouched. */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+html::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+}
+
+[class*="overflow"],
+textarea,
+pre {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+[class*="overflow"]:hover,
+[class*="overflow"]:focus-within,
+textarea:hover,
+textarea:focus-within,
+pre:hover,
+pre:focus-within {
+  scrollbar-color: var(--scroll-thumb) transparent;
+}
+[class*="overflow"]:hover::-webkit-scrollbar-thumb,
+[class*="overflow"]:focus-within::-webkit-scrollbar-thumb,
+textarea:hover::-webkit-scrollbar-thumb,
+pre:hover::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
 }
 
 @media print {
+  :root,
+  [data-theme="dark"] {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f3f5f8;
+    --ink: #101828;
+    --muted: #46536a;
+    --faint: #7d8899;
+    --border: #d5dce6;
+    --scroll-thumb: #9aa7b8;
+  }
   .no-print {
     display: none !important;
   }
@@ -28,4 +112,21 @@ body {
     box-shadow: none !important;
     border: none !important;
   }
+}
+
+/* theme toggle icon cross-fade */
+.theme-icon {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease,
+    filter 300ms ease;
+}
+.theme-icon-hidden {
+  opacity: 0;
+  transform: scale(0.25);
+  filter: blur(4px);
 }

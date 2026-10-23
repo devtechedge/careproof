@@ -16,17 +16,23 @@ export const metadata: Metadata = {
   title: "CareProof - Branded monthly care reports for web agencies",
   description:
     "Prove your website care retainers with branded monthly reports. Uptime, SSL, security headers, links and more for every client site, any stack, no plugin.",
+  icons: { icon: "/favicon.svg" },
 };
+
+const themeBoot = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t="light";}document.documentElement.setAttribute("data-theme",t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute("data-theme","light");}})();`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      data-theme="light"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
-        {children}
-      </body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
+      </head>
+      <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
 }
