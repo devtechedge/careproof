@@ -11,7 +11,7 @@ MVP complete locally. 35 tests passing, lint clean, production build green, demo
 ## Stack
 
 - Next.js 16 (App Router) + TypeScript + Tailwind 4
-- Prisma 7 with SQLite (better-sqlite3 adapter) for local dev; schema is portable, switch `provider` to `postgresql` plus the Neon/Pg adapter at deploy
+- Prisma 7 with PostgreSQL on Neon (@prisma/adapter-pg); pooled URL at runtime, unpooled for `db push`
 - scrypt password hashing, DB-backed sessions (sha256 of cookie token), HttpOnly cookies
 - Vitest for unit + service tests
 
@@ -19,13 +19,14 @@ MVP complete locally. 35 tests passing, lint clean, production build green, demo
 
 ```
 npm install
+cp .env.example .env        # fill in your Neon Postgres URLs
 npx prisma generate
-npx prisma db push          # creates dev.db from DATABASE_URL
+npx prisma db push          # use DATABASE_URL_UNPOOLED for DDL
 npm run db:seed             # optional: demo workspace
 npm run dev                 # http://localhost:3000
 ```
 
-Environment: copy `.env.example` to `.env`. `SESSION_PEPPER` must be a long random string in anything shared or deployed.
+Environment: see `.env.example`. `DATABASE_URL` is the pooled Neon string the app uses; `DATABASE_URL_UNPOOLED` is for `prisma db push` (DDL is blocked through the pooler). The test suite runs against a separate `careproof_test` database and needs ~30s per heavy test (remote Postgres round trips). Note: with the local `.env` pointing at the production `careproof` database, local dev shares prod data at pilot scale; branch the database before doing experimental work.
 
 Demo login after seeding: `demo@careproof.test` / `demo-password-1` (demo data is labelled in the UI and in the report).
 
@@ -36,7 +37,7 @@ Uptime/HTTP status, TTFB, HTML weight, TLS certificate expiry (direct TLS read),
 ## Commands
 
 - `npm run dev` / `npm run build` / `npm run start`
-- `npm test` (Vitest; uses a throwaway DB in `.tmp/`)
+- `npm test` (Vitest; pushes schema to the `careproof_test` database first)
 - `npm run lint`
 - `npm run db:push`, `npm run db:seed`
 
