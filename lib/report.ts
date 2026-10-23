@@ -27,21 +27,30 @@ export function summarizeChecks(checks: Array<{ status: CheckStatus }>): CheckSu
   return s;
 }
 
-export type OverallStatus = "pass" | "warn" | "fail";
+export type OverallStatus = "pass" | "warn" | "fail" | "info";
 
+/**
+ * Business rules for a site's overall status:
+ * - any fail -> fail (a verified problem, or the site was unreachable)
+ * - else any warn -> warn
+ * - else if every result is informational -> info (nothing was actually assessed)
+ * - else pass (at least one verified pass, zero fails, zero warns)
+ */
 export function overallFor(
   checks: Array<{ status: CheckStatus }>
 ): OverallStatus {
   const s = summarizeChecks(checks);
   if (s.fail > 0) return "fail";
   if (s.warn > 0) return "warn";
+  if (s.pass === 0) return "info"; // nothing was actually verified healthy
   return "pass";
 }
 
 export function worstOverall(items: Array<{ overall: OverallStatus }>): OverallStatus {
   if (items.some((i) => i.overall === "fail")) return "fail";
   if (items.some((i) => i.overall === "warn")) return "warn";
-  return "pass";
+  if (items.some((i) => i.overall === "pass")) return "pass";
+  return "info";
 }
 
 export function snapshotChecks(checks: CheckOutcome[]): string {

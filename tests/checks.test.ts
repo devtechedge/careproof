@@ -187,12 +187,12 @@ describe("report helpers", () => {
     expect(summarizeChecks(checks)).toEqual({ pass: 2, warn: 1, fail: 0, info: 1 });
     expect(overallFor(checks)).toBe("warn");
     expect(overallFor([{ status: "pass" }, { status: "fail" }])).toBe("fail");
-    expect(overallFor([{ status: "info" }])).toBe("pass");
+    expect(overallFor([{ status: "info" }])).toBe("info"); // nothing verified healthy
   });
 
   it("worstOverall across sites", () => {
     expect(worstOverall([{ overall: "pass" }, { overall: "warn" }])).toBe("warn");
     expect(worstOverall([{ overall: "pass" }, { overall: "fail" }])).toBe("fail");
-    expect(worstOverall([])).toBe("pass");
+    expect(worstOverall([])).toBe("info"); // nothing verified healthy
   });
 });

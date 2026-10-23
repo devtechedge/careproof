@@ -1,6 +1,6 @@
 # Security Test Results
 
-Session 3, 2026-10-24, branch `security-hardening`. Full verification run after all fixes: `npm run lint` (clean, 0 errors 0 warnings), `npx tsc --noEmit` (clean), `npx vitest run` (107/107 passing, ~105s against the `careproof_test` Neon database), `npm run build` (green, all DB routes dynamic). Nothing was pushed to main or deployed; production untouched.
+Session 3, 2026-10-24 (initially branch security-hardening, since merged and deployed; counts updated). Full verification run after all fixes: `npm run lint` (clean, 0 errors 0 warnings), `npx tsc --noEmit` (clean), `npx vitest run` (107/107 passing, ~105s against the `careproof_test` Neon database), `npm run build` (green, all DB routes dynamic). Nothing was pushed to main or deployed; production untouched.
 
 ## Per-finding results
 
@@ -44,3 +44,8 @@ Session 3, 2026-10-24, branch `security-hardening`. Full verification run after 
 - Seed script: now refuses to run against a database named `careproof` without `ALLOW_PROD_SEED=1`.
 - Git: no secrets staged; `.env` ignored; branch not pushed.
 - React-compiler lint rule satisfied by moving `Date.now()` staleness logic out of component files into `lib/report.ts`.
+
+### Update 2026-10-24, trust pass (branch p0-trust-pass, not deployed)
+- Suite grew 107 -> 121 tests: scoped client reports (selection, foreign-ID filtering, per-scope drafts, snapshot immutability, portfolio labelling), intended-plan validation, result-semantics precedence, and loopback fixture integration for runSiteChecks (unreachable homepage -> explicit skipped-info rows; malformed pages; stable row order).
+- New fixes verified here: x-vercel-forwarded-for preferred for rate limits (Vercel docs 2026-10-24), security headers on all responses, robots/sitemap routes excluding share links, health endpoint detail removed, favicon guard-error containment, guard threading to robots/sitemap/links/RDAP paths.
+- 121/121 vitest, lint clean, typecheck clean, production build compiled, 5/5 Playwright smokes. Mobile/print visual review flagged as not yet performed (see ENGINEERING_HANDOFF.md).

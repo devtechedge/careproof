@@ -14,11 +14,11 @@ async function sampleReportLink(): Promise<string | null> {
 }
 
 const CHECKS = [
-  ["Site is up", "HTTP status and response time from the homepage."],
+  ["Site is reachable", "HTTP status and response time at the moment of the check."],
   ["SSL certificate", "Validity, issuer and days to expiry."],
   ["HTTPS redirect", "Visitors on http:// are sent to https://."],
   ["Security headers", "HSTS, CSP and the other standard protections."],
-  ["Response speed", "Time to first byte, flagged against sane thresholds."],
+  ["Response speed", "Time to first byte at check time; not a full performance test."],
   ["Homepage links", "A sample of links checked for 404s."],
   ["robots.txt and sitemap", "Both reachable, sitemap declared."],
   ["Domain expiry", "Registration expiry via the public RDAP registry."],
@@ -68,7 +68,7 @@ export default async function LandingPage() {
             Your clients ask what the retainer pays for. Send them proof.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg text-[var(--muted)]">
-            CareProof checks every site you manage and turns the results into a branded
+            CareProof runs a point-in-time health check on the sites you choose and turns the results into a branded
             monthly report in minutes. Any stack: WordPress, Webflow, Shopify, custom.
             No plugin to install, nothing to self-host.
           </p>
@@ -89,7 +89,7 @@ export default async function LandingPage() {
             ) : null}
           </div>
           <p className="mt-4 text-sm text-[var(--muted)]">
-            Deterministic checks only. No AI, no third-party data, your branding on every page.
+            Deterministic checks, no AI, no trackers. Domain facts come from the public RDAP registry. Free during the pilot.
           </p>
         </section>
 
@@ -102,7 +102,7 @@ export default async function LandingPage() {
               ],
               [
                 "2. Run checks",
-                "One click runs the full set: uptime, SSL, expiry, redirects, headers, speed, links, sitemap.",
+                "One click runs the full set on demand: reachability, SSL, expiry, redirects, headers, response time, links, sitemap.",
               ],
               [
                 "3. Send the report",
@@ -146,28 +146,31 @@ export default async function LandingPage() {
             <div className="mt-8 grid gap-6 sm:grid-cols-3">
               {[
                 {
+                  id: "starter",
                   name: "Starter",
                   price: "$19",
                   per: "/month",
                   for: "Freelancers up to 15 client sites.",
-                  features: ["15 sites", "Branded monthly reports", "Share links", "Print to PDF"],
+                  features: ["15 sites", "8 reports/month", "Branded client reports", "Share link + print to PDF (browser)"],
                   cta: "Start with Starter",
                 },
                 {
+                  id: "studio",
                   name: "Studio",
                   price: "$49",
                   per: "/month",
                   for: "Small agencies up to 50 sites.",
-                  features: ["50 sites", "Everything in Starter", "30 reports/month", "Priority checks"],
+                  features: ["50 sites", "Everything in Starter", "30 reports/month", "Client-scoped reports"],
                   cta: "Choose Studio",
                   highlight: true,
                 },
                 {
+                  id: "agency",
                   name: "Agency",
                   price: "$99",
                   per: "/month",
                   for: "Agencies up to 150 sites.",
-                  features: ["150 sites", "Everything in Studio", "90 reports/month", "API access (coming)"],
+                  features: ["150 sites", "Everything in Studio", "90 reports/month"],
                   cta: "Choose Agency",
                 },
               ].map((tier) => (
@@ -191,7 +194,7 @@ export default async function LandingPage() {
                     ))}
                   </ul>
                   <Link
-                    href="/signup"
+                    href={`/signup?plan=${tier.id}`}
                     className={`mt-6 block rounded-md px-4 py-2 text-center text-sm font-semibold ${
                       tier.highlight
                         ? "bg-blue-600 text-white hover:bg-blue-700"
@@ -204,7 +207,7 @@ export default async function LandingPage() {
               ))}
             </div>
             <p className="mt-6 text-xs text-[var(--muted)]">
-              Prices in USD. Annual is 10x the monthly price (two months free). Plan limits
+              Free during the pilot: signup starts nothing on your card. Planned paid tiers in USD; annual billing (10x monthly) arrives with checkout. Plan limits
               shown are enforced in the product today; checkout goes live after the pilot.
             </p>
           </div>

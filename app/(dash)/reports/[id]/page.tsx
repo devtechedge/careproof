@@ -22,7 +22,7 @@ export default async function ReportDetailPage({
     id: item.id,
     siteLabel: item.siteLabel,
     siteUrl: item.siteUrl,
-    overall: item.overall as "pass" | "warn" | "fail",
+    overall: item.overall as "pass" | "warn" | "fail" | "info",
     checks: parseChecksSnapshot(item.checksJson),
     observedAt: item.observedAt,
     fresh: item.fresh,
@@ -36,8 +36,11 @@ export default async function ReportDetailPage({
     overall === "pass"
       ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
       : overall === "warn"
-        ? "border-amber-200 bg-amber-50 text-amber-800"
-        : "border-red-200 bg-red-50 text-red-800";
+        ? "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+        : overall === "info"
+          ? "border-[var(--border)] bg-[var(--surface-2)] text-[var(--muted)]"
+          : "border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300";
+
 
   return (
     <div className="space-y-6">
@@ -94,7 +97,13 @@ export default async function ReportDetailPage({
 
       <div className={`no-print rounded-xl border px-4 py-3 text-sm font-medium ${overallTone}`}>
         Portfolio status this month:{" "}
-        {overall === "pass" ? "all checks healthy" : overall === "warn" ? "attention needed" : "issues found"}.
+        {overall === "pass"
+          ? "all assessed checks healthy"
+          : overall === "warn"
+            ? "attention needed"
+            : overall === "info"
+              ? "not assessable from current observations"
+              : "issues found"}.
         {items.filter((i) => i.overall === "fail").length > 0
           ? ` ${items.filter((i) => i.overall === "fail").length} site(s) with failing checks.`
           : ""}
@@ -130,6 +139,7 @@ export default async function ReportDetailPage({
         note={report.agencyNote}
         period={periodLabel(report.period)}
         staleCount={staleCount}
+        scopeType={report.scopeType}
       />
     </div>
   );

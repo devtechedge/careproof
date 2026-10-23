@@ -1,4 +1,4 @@
-import { addSiteForm, generateReportForm, removeSiteForm, runAllChecksForm, runChecksForm } from "@/app/actions";
+import { addSiteForm, generatePortfolioForm, generateReportForm, removeSiteForm, runAllChecksForm, runChecksForm } from "@/app/actions";
 import { currentAccount } from "@/lib/auth";
 import { planFor } from "@/lib/plans";
 import { listSites } from "@/lib/services";
@@ -146,7 +146,7 @@ export default async function DashboardPage({
                   <td className="px-4 py-3 text-xs text-[var(--muted)]">
                     {site.summary ? (
                       <span>
-                        {site.summary.pass} pass, {site.summary.warn} warn, {site.summary.fail} fail
+                        {site.summary.pass} pass, {site.summary.warn} warn, {site.summary.fail} fail, {site.summary.info} not assessed
                       </span>
                     ) : (
                       <span className="text-[var(--faint)]">Run checks first</span>
@@ -186,31 +186,74 @@ export default async function DashboardPage({
       )}
 
       <section className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
-        <h2 className="text-lg font-semibold">This month&apos;s report</h2>
+        <h2 className="text-lg font-semibold">This month&apos;s reports</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Generates a branded report from the latest check results (runs fresh checks for any
-          site that has none). Optionally add a note your clients will read at the top.
+          A client report includes only the sites you select below, so one client never sees
+          another client&apos;s domains or findings. Report contents are saved at generation
+          time and never change after you publish.
         </p>
         {account.isDemo ? (
           <p className="mt-4 text-sm text-[var(--muted)]">
             Report generation is disabled in the demo. The pre-generated sample report is on the Reports page.
           </p>
         ) : (
-        <form action={generateReportForm} className="mt-4 flex flex-col gap-3 sm:flex-row">
-          <input
-            name="note"
-            placeholder="Note to clients, e.g. what you improved this month (optional)"
-            className="flex-1 rounded-md border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-blue-600"
-          />
+        <form action={generateReportForm} className="mt-4 space-y-3">
+          <fieldset>
+            <legend className="text-sm font-medium text-[var(--ink)]">
+              Sites to include in this client report
+            </legend>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {sites.map((site) => (
+                <label key={site.id} className="flex items-start gap-2 rounded-md border border-[var(--border)] px-3 py-2 text-sm">
+                  <input type="checkbox" name="siteIds" value={site.id} className="mt-0.5" />
+                  <span>
+                    <span className="font-medium text-[var(--ink)]">{site.label}</span>
+                    <span className="block break-all text-xs text-[var(--faint)]">{site.url}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input
+              name="scopeLabel"
+              placeholder="Client name for this report (optional)"
+              className="rounded-md border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-blue-600"
+            />
+            <input
+              name="note"
+              placeholder="Note to clients, e.g. what you improved this month (optional)"
+              className="rounded-md border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-blue-600"
+            />
+          </div>
           <button
             type="submit"
             disabled={sites.length === 0}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            Generate report
+            Generate client report
           </button>
         </form>
         )}
+        {sites.length > 0 && !account.isDemo ? (
+          <details className="mt-4 rounded-md border border-[var(--border)] px-4 py-3">
+            <summary className="cursor-pointer text-sm font-medium text-[var(--ink)]">
+              Internal portfolio report (all {sites.length} sites)
+            </summary>
+            <p className="mt-2 text-xs text-[var(--muted)]">
+              Includes every site on your account in one document. Useful internally; do not
+              send it to a single client, because it lists all of your other clients.
+            </p>
+            <form action={generatePortfolioForm} className="mt-2">
+              <button
+                type="submit"
+                className="rounded-md border border-[var(--border)] px-4 py-2 text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]"
+              >
+                Generate internal portfolio report
+              </button>
+            </form>
+          </details>
+        ) : null}
       </section>
     </div>
   );

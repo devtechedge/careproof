@@ -24,7 +24,7 @@ export default async function PublicReportPage({
     id: item.id,
     siteLabel: item.siteLabel,
     siteUrl: item.siteUrl,
-    overall: item.overall as "pass" | "warn" | "fail",
+    overall: item.overall as "pass" | "warn" | "fail" | "info",
     checks: parseChecksSnapshot(item.checksJson),
     observedAt: item.observedAt,
     fresh: item.fresh,
@@ -42,6 +42,7 @@ export default async function PublicReportPage({
         note={report.agencyNote}
         period={periodLabel(report.period)}
         staleCount={staleCount}
+        scopeType={report.scopeType}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 # Security Audit
 
-Audited: 2026-10-24, session 3, branch `security-hardening` (created from main a851b6a). Method: full read of every server-side code path (auth, server actions, services, checks engine, report generation, demo seed, rate limits, schema) against the live threat model of an authenticated multi-tenant SaaS that fetches user-supplied URLs. Baseline before changes: lint clean, `tsc --noEmit` clean, 35/35 tests passing against the `careproof_test` database (verified 2026-10-24, this session, not copied from earlier notes).
+Audited: 2026-10-24. Reconciled same day after merge+deploy: findings A-1..A-7 are live in production (main fca43ec, careproof-tau.vercel.app). Superseded counts below were accurate at audit time; current totals live in SECURITY_TEST_RESULTS.md. Method: full read of every server-side code path (auth, server actions, services, checks engine, report generation, demo seed, rate limits, schema) against the live threat model of an authenticated multi-tenant SaaS that fetches user-supplied URLs. Baseline before changes: lint clean, `tsc --noEmit` clean, 35/35 tests passing against the `careproof_test` database (verified 2026-10-24, this session, not copied from earlier notes).
 
 Severity scale: HIGH = exploitable by a regular authenticated user or crafted input with meaningful impact. MEDIUM = integrity/accuracy or resource risk. LOW = hardening gap with limited exposure. INFO = documented limitation, no fix scheduled this session.
 
@@ -16,25 +16,25 @@ Evidence (pre-fix code):
 
 Remediation (implemented this session): centralized `lib/net-guard.ts` - URL canonicalization + protocol/credential/port allowlist; DNS resolution through a guarded lookup that rejects if ANY resolved address is prohibited (loopback, private, CGNAT, link-local incl. cloud metadata, ULA, multicast, reserved, IPv4-mapped IPv6, etc. via ipaddr.js); the guarded lookup is the lookup used BY the actual outbound connection (undici Agent `connect.lookup`), so the validated address is the address connected to (pinning, no re-resolution gap); all redirects handled manually with per-hop validation and a 5-hop cap; TLS checks connect to the validated IP with correct `servername`; hard connect/body/total timeouts, byte caps, and bounded concurrency; RDAP, links, sitemap, favicon all routed through the guard. Fail closed with customer-facing errors. Verification: `tests/net-guard.test.ts` (IP battery incl. metadata + IPv4-mapped + alternative notations, URL rejections, pinned-lookup rebinding simulation, local-server integration proving prohibited connections never arrive, redirect-to-blocked, body cap, timeout).
 
-Status: FIXED on branch, verified by tests. See SECURITY_TEST_RESULTS.md.
+Status: FIXED, deployed to production 2026-10-24, verified by tests (see SECURITY_TEST_RESULTS.md).
 
 ## A-2 HIGH - Shared demo account is fully mutable
 
 Evidence: `lib/services.ts` had no `isDemo` handling; `scripts/seed-demo.ts` documents a shared login published on `/login`. Any visitor could delete demo sites, alter branding, run floods of checks, change the shared password (locking out everyone), and generate/publish unlimited reports.
 Remediation: server-side read-only policy for demo accounts enforced in the service layer (every mutating service rejects demo accounts); UI hides/disables mutation controls and shows a read-only banner; add tests (demo mutation rejected, non-demo workflows unaffected). Password change also rejected for demo.
-Status: FIXED on branch, tested.
+Status: FIXED, deployed, tested.
 
 ## A-3 MEDIUM - Report freshness: stale observations presented as current
 
 Evidence: `generateReport` used each site's latest CheckRun regardless of age; `ReportItem` stored no observation timestamp; the client-facing report implied current health.
 Remediation: `ReportItem.observedAt` added (schema change, pushed to `careproof_test` only); generation refreshes sites with no run or runs older than 24h (bounded: max 4 rechecks, 25s deadline, sequential) and records per-item observation time; per-site "Observed <date>" + age shown; portfolio staleness banner when any observation is older than 7 days; footer strengthened: checks are point-in-time public observations, not verification of backups/updates/remediation. Draft reports for the same period are regenerated transactionally (no duplicates, no half-created reports); published reports remain immutable snapshots.
-Status: FIXED on branch, tested (freshness policy unit tests + draft-reuse transaction test).
+Status: FIXED, deployed, tested (freshness policy unit tests + draft-reuse transaction test).
 
 ## A-4 MEDIUM - HTTPS-redirect check overstates conclusions
 
 Evidence: port-80 connection refusal was reported as `pass` with value "No HTTP endpoint / site is HTTPS-only" - an unreachable HTTP endpoint does not prove a redirect exists.
 Remediation: refused/errored HTTP endpoint now reports `info` "HTTP endpoint unreachable - redirect not verified". Pass requires an observed 3xx to an https:// destination.
-Status: FIXED on branch, tested.
+Status: FIXED, deployed, tested.
 
 ## A-5 MEDIUM - Resource exhaustion: unbounded portfolio check bursts
 
@@ -46,7 +46,7 @@ Status: FIXED on branch, tested (batch cap).
 
 Evidence: `changePassword` updated the hash only; existing session rows (other browsers/devices, or a stolen token) stayed valid for up to 30 days.
 Remediation: password change now deletes every session except the current one. Test added.
-Status: FIXED on branch, tested.
+Status: FIXED, deployed, tested.
 
 ## A-7 LOW - Share links cannot be revoked
 
@@ -70,4 +70,4 @@ Email verification and password reset (needs email infrastructure + approval), n
 
 ## Database safety during this audit
 
-All schema changes pushed only to the `careproof_test` database. The production `careproof` database was not touched (no `db push`, no seed, no mutations) - the fixes ship on the branch and reach production only with deploy approval, at which point `DATABASE_URL_UNPOOLED=... npx prisma db push` is the documented step.
+At audit time all schema changes went only to `careproof_test`; the additive columns were subsequently pushed to production as part of the approved deploy. During this 2026-10-24 trust pass, again only `careproof_test` was touched; the production `careproof` database was not (no `db push`, no seed, no mutations) - the fixes ship on the branch and reach production only with deploy approval, at which point `DATABASE_URL_UNPOOLED=... npx prisma db push` is the documented step.

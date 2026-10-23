@@ -28,7 +28,14 @@ async function requireAccountId(): Promise<string> {
 
 async function clientIp(): Promise<string> {
   const h = await headers();
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  // x-vercel-forwarded-for is set by Vercel and cannot be spoofed by the
+  // client (Vercel request-headers docs, checked 2026-10-24); plain
+  // x-forwarded-for can be, so it is only a fallback off-Vercel.
+  return (
+    h.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
+    h.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    "local"
+  );
 }
 
 function back(path: string, params: Record<string, string>): never {
@@ -50,6 +57,7 @@ export async function authSignUp(
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
     name: String(formData.get("name") ?? ""),
+    intendedPlan: String(formData.get("plan") ?? ""),
   });
   if (!result.ok) return { error: result.error };
   await createSession(result.data.accountId);
@@ -151,11 +159,36 @@ export async function generateReportForm(formData: FormData): Promise<void> {
     3_600_000
   );
   if (!rl.allowed) back("/dashboard", { err: "Report limit reached for this hour." });
-  const result = await generateReport(
-    accountId,
-    undefined,
-    String(formData.get("note") ?? "")
+  const siteIds = formData
+    .getAll("siteIds")
+    .map((v) => String(v))
+    .filter(Boolean);
+  if (siteIds.length === 0) {
+    back("/dashboard", { err: "Select at least one site to include in the client report." });
+  }
+  const result = await generateReport(accountId, {
+    siteIds,
+    scopeLabel: String(formData.get("scopeLabel") ?? ""),
+    agencyNote: String(formData.get("note") ?? ""),
+  });
+  if (!result.ok) back("/dashboard", { err: result.error });
+  revalidatePath("/reports");
+  redirect(`/reports/${result.data.reportId}`);
+}
+
+export async function generatePortfolioForm(formData: FormData): Promise<void> {
+  const accountId = await requireAccountId();
+  const rl = await rateLimit(
+    `report:${accountId}`,
+    "report",
+    LIMITS.reportPerAccountPerHour,
+    3_600_000
   );
+  if (!rl.allowed) back("/dashboard", { err: "Report limit reached for this hour." });
+  const result = await generateReport(accountId, {
+    siteIds: null,
+    agencyNote: String(formData.get("note") ?? ""),
+  });
   if (!result.ok) back("/dashboard", { err: result.error });
   revalidatePath("/reports");
   redirect(`/reports/${result.data.reportId}`);

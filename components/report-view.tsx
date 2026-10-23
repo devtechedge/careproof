@@ -20,7 +20,7 @@ export interface ReportItemView {
   id: string;
   siteLabel: string;
   siteUrl: string;
-  overall: "pass" | "warn" | "fail";
+  overall: "pass" | "warn" | "fail" | "info";
   checks: ReportCheck[];
   observedAt?: Date | string | null;
   fresh?: boolean;
@@ -50,12 +50,14 @@ export function ReportItems({
   note,
   period,
   staleCount = 0,
+  scopeType = "client",
 }: {
   items: ReportItemView[];
   branding: ReportBranding;
   note: string;
   period: string;
   staleCount?: number;
+  scopeType?: string;
 }) {
   const accent = branding.accentColor;
   return (
@@ -75,7 +77,9 @@ export function ReportItems({
           )}
           <div>
             <p className="font-bold leading-tight">{branding.name}</p>
-            <p className="text-xs text-[var(--muted)]">Website care report</p>
+            <p className="text-xs text-[var(--muted)]">
+              {scopeType === "portfolio" ? "Website care report - all sites" : "Website care report"}
+            </p>
           </div>
         </div>
         <p className="text-sm font-semibold" style={{ color: accent }}>
@@ -127,7 +131,13 @@ export function ReportItems({
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <span className={`rounded-full px-2 py-0.5 font-semibold ${STATUS_STYLE[item.overall]}`}>
-                    {item.overall === "pass" ? "All healthy" : item.overall === "warn" ? "Attention needed" : "Issues found"}
+                    {item.overall === "pass"
+                      ? "All assessed checks healthy"
+                      : item.overall === "warn"
+                        ? "Attention needed"
+                        : item.overall === "info"
+                          ? "Not assessable"
+                          : "Issues found"}
                   </span>
                   <span className="text-[var(--muted)]">
                     {counts.pass} pass / {counts.warn} attention / {counts.fail} issues

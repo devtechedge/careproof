@@ -107,7 +107,7 @@ describe("report freshness policy", () => {
     const s = await addSite(accountA, "Site1", "https://fresh-draft.example");
     if (!s.ok) throw new Error("setup failed");
     await seedRunWithResults(s.data.siteId, accountA, "pass");
-    const first = await generateReport(accountA, undefined, "first note");
+    const first = await generateReport(accountA, { agencyNote: "first note" });
     expect(first.ok).toBe(true);
     if (!first.ok) return;
     const row1 = await prisma.report.findUnique({
@@ -118,7 +118,7 @@ describe("report freshness policy", () => {
     expect(row1?.items.length).toBe(1);
     expect(row1?.items[0].observedAt).not.toBeNull();
 
-    const second = await generateReport(accountA, undefined, "updated note");
+    const second = await generateReport(accountA, { agencyNote: "updated note" });
     expect(second.ok).toBe(true);
     if (!second.ok) return;
     expect(second.data.reportId).toBe(first.data.reportId); // draft reused, no duplicate

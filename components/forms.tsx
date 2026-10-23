@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { authLogIn, authSignUp } from "@/app/actions";
 
 function FieldError({ error }: { error?: string }) {
@@ -15,10 +15,11 @@ function FieldError({ error }: { error?: string }) {
 const inputClass =
   "w-full rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--ink)] outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20";
 
-export function SignUpForm() {
+export function SignUpForm({ plan }: { plan?: string | null }) {
   const [state, action, pending] = useActionState(authSignUp, undefined);
   return (
     <form action={action} className="space-y-4">
+      {plan ? <input type="hidden" name="plan" value={plan} /> : null}
       <FieldError error={state?.error} />
       <div>
         <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="name">
@@ -105,13 +106,28 @@ export function PrintButton({ label }: { label: string }) {
 }
 
 export function CopyButton({ text, label }: { text: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
   return (
-    <button
-      type="button"
-      onClick={() => navigator.clipboard?.writeText(text)}
-      className="no-print rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
-    >
-      {label}
-    </button>
+    <span className="no-print inline-flex items-center gap-2">
+      <button
+        type="button"
+        onClick={copy}
+        className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]"
+      >
+        {copied ? "Link copied" : label}
+      </button>
+      <span className="text-xs text-[var(--faint)]" role="status" aria-live="polite">
+        {copied ? "Share link copied to clipboard" : ""}
+      </span>
+    </span>
   );
 }

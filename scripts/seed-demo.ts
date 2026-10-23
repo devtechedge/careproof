@@ -160,8 +160,11 @@ async function main() {
       accountId: account.id,
       publicId: randomBytes(14).toString("hex"),
       period,
+      scopeType: "portfolio",
+      scopeKey: "all",
+      scopeLabel: "Sample portfolio",
       agencyNote:
-        "Sample note: this month we updated plugins across all WordPress sites, fixed broken links on the Legal Partners site, and the Fitness Studio store recovered after a theme app conflict. Domain renewal for City Electricians is scheduled this week.",
+        "Sample note: this month we updated plugins across all WordPress sites. Legal Partners still has 6 broken links; fixes are scheduled for next sprint. The Fitness Studio storefront is currently unreachable after a theme app conflict and restoration is in progress. The City Electricians domain expires in 9 days and renewal is booked for this week.",
       brandingJson: JSON.stringify({
         name: "Northside Web Studio (Demo)",
         accentColor: "#0f766e",

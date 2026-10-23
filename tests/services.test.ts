@@ -134,7 +134,7 @@ describe("reports", () => {
     const s = await addSite(accountA, "Reported", "https://report-test.example");
     if (!s.ok) throw new Error("setup failed");
     await seedRunWithResults(s.data.siteId, accountA, "warn");
-    const rep = await generateReport(accountA, undefined, "Monthly note here");
+    const rep = await generateReport(accountA, { agencyNote: "Monthly note here" });
     expect(rep.ok).toBe(true);
     if (!rep.ok) return;
     // drafts are private: the share link works only after publishing

@@ -27,6 +27,7 @@ export default async function ReportsPage() {
             <thead className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
               <tr>
                 <th className="px-4 py-3">Period</th>
+                <th className="px-4 py-3">Scope</th>
                 <th className="px-4 py-3">Sites</th>
                 <th className="px-4 py-3">Health</th>
                 <th className="px-4 py-3">Status</th>
@@ -40,6 +41,13 @@ export default async function ReportsPage() {
                     <Link href={`/reports/${r.id}`} className="font-semibold text-blue-600 hover:text-blue-700">
                       {periodLabel(r.period)}
                     </Link>
+                  </td>
+                  <td className="px-4 py-3">
+                    {r.scopeType === "portfolio" ? (
+                      <span className="text-xs text-[var(--muted)]">Internal portfolio</span>
+                    ) : (
+                      <span className="text-xs font-medium text-[var(--ink)]">{r.scopeLabel || "Client"}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-[var(--muted)]">{r.siteCount}</td>
                   <td className="px-4 py-3 text-xs text-[var(--muted)]">

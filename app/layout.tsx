@@ -17,6 +17,15 @@ export const metadata: Metadata = {
   description:
     "Prove your website care retainers with branded monthly reports. Uptime, SSL, security headers, links and more for every client site, any stack, no plugin.",
   icons: { icon: "/favicon.svg" },
+  openGraph: {
+    title: "CareProof - branded website care reports",
+    description:
+      "Point-in-time health checks and branded client reports for web agencies. Any stack, no plugin.",
+    url: "https://careproof-tau.vercel.app",
+    siteName: "CareProof",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 const themeBoot = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t="light";}document.documentElement.setAttribute("data-theme",t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute("data-theme","light");}})();`;

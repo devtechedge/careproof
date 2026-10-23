@@ -92,9 +92,10 @@ export async function fetchPage(
 
 async function guardedFetchTextOrStatus(
   url: string,
-  timeoutMs: number
+  timeoutMs: number,
+  guard: { fetch: typeof netGuard.fetch }
 ): Promise<{ ok: boolean; status: number; text: string }> {
-  const res = await netGuard.fetch(url, { timeoutMs, redirect: "follow" });
+  const res = await guard.fetch(url, { timeoutMs, redirect: "follow" });
   if (res.status >= 200 && res.status < 300) {
     const text = await res.text();
     return { ok: true, status: res.status, text: text.slice(0, 512 * 1024) };
@@ -269,7 +270,10 @@ export interface RdapResult {
   registrar: string | null;
 }
 
-export async function getDomainExpiryViaRdap(hostname: string): Promise<RdapResult> {
+export async function getDomainExpiryViaRdap(
+  hostname: string,
+  guard: { fetch: typeof netGuard.fetch } = netGuard
+): Promise<RdapResult> {
   const labels = hostname.split(".");
   const domain =
     labels.length > 2 && !/^(co|com|org|net|gov|ac)\.[a-z]{2}$/i.test(labels.slice(-2).join("."))
@@ -278,7 +282,7 @@ export async function getDomainExpiryViaRdap(hostname: string): Promise<RdapResu
   try {
     // rdap.org redirects to the authoritative registry server; every hop is
     // validated by the guard before it is followed.
-    const res = await netGuard.fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, {
+    const res = await guard.fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, {
       timeoutMs: 8_000,
       redirect: "follow",
       headers: { accept: "application/rdap+json" },
@@ -313,10 +317,11 @@ export async function getDomainExpiryViaRdap(hostname: string): Promise<RdapResu
 }
 
 async function checkUptime(
-  url: string
+  url: string,
+  guard: { fetch: typeof netGuard.fetch }
 ): Promise<{ outcome: CheckOutcome; page: FetchedPage | null }> {
   try {
-    const page = await fetchPage(url);
+    const page = await fetchPage(url, 12_000, guard);
     if (page.status >= 400) {
       return {
         outcome: {
@@ -367,7 +372,10 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
-export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
+export async function runSiteChecks(
+  rawUrl: string,
+  guard: { fetch: typeof netGuard.fetch } = netGuard
+): Promise<CheckOutcome[]> {
   const normalized = normalizeSiteUrl(rawUrl);
   if (!normalized.ok) {
     return [
@@ -382,9 +390,23 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
   const { url, hostname } = normalized;
   const outcomes: CheckOutcome[] = [];
 
-  const uptime = await checkUptime(url);
+  const uptime = await checkUptime(url, guard);
   outcomes.push(uptime.outcome);
   const page = uptime.page;
+
+  if (!page) {
+    // Homepage unreachable: every check that needs the page is explicitly
+    // recorded as skipped so a missing row can never look like a pass.
+    const dependent = ["ttfb", "weight", "headers", "robots", "sitemap", "favicon", "links"];
+    for (const key of dependent) {
+      outcomes.push({
+        checkKey: key,
+        status: "info",
+        value: "Not assessed",
+        detail: "Skipped: the homepage could not be fetched, so this check did not run.",
+      });
+    }
+  }
 
   if (page) {
     outcomes.push({
@@ -415,7 +437,8 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
     try {
       const robots = await guardedFetchTextOrStatus(
         new URL("/robots.txt", page.finalUrl).toString(),
-        8_000
+        8_000,
+        guard
       );
       if (robots.ok) {
         outcomes.push({
@@ -427,7 +450,7 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
         const sitemapUrl =
           findSitemapInRobots(robots.text) ??
           new URL("/sitemap.xml", page.finalUrl).toString();
-        const sitemap = await guardedFetchTextOrStatus(sitemapUrl, 8_000);
+        const sitemap = await guardedFetchTextOrStatus(sitemapUrl, 8_000, guard);
         outcomes.push({
           checkKey: "sitemap",
           status: sitemap.ok ? "pass" : "warn",
@@ -460,10 +483,15 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
 
     let faviconOk = hasFaviconLink(page.bodyText);
     if (!faviconOk) {
-      faviconOk = await guardedFetchTextOrStatus(
-        new URL("/favicon.ico", page.finalUrl).toString(),
-        6_000
-      ).then((r) => r.ok && r.status !== 0);
+      try {
+        faviconOk = await guardedFetchTextOrStatus(
+          new URL("/favicon.ico", page.finalUrl).toString(),
+          6_000,
+          guard
+        ).then((r) => r.ok && r.status !== 0);
+      } catch {
+        faviconOk = false;
+      }
     }
     outcomes.push({
       checkKey: "favicon",
@@ -485,7 +513,7 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
       const broken: string[] = [];
       await mapWithConcurrency(links, 5, async (link) => {
         try {
-          const res = await netGuard.fetch(link, {
+          const res = await guard.fetch(link, {
             timeoutMs: 8_000,
             redirect: "follow",
             method: "GET",
@@ -507,7 +535,7 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
   }
 
   // TLS certificate (direct, pinned to a validated address, SNI preserved)
-  const tlsInfo = await getTlsExpiry(hostname);
+  const tlsInfo = await getTlsExpiry(hostname);  // TLS pin uses the production resolver by design
   outcomes.push({
     checkKey: "ssl",
     status: sslStatusFor(tlsInfo.daysRemaining),
@@ -521,7 +549,7 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
   // HTTP -> HTTPS redirect (manual: we inspect the first hop ourselves)
   try {
     const httpUrl = url.replace(/^https:/, "http:");
-    const res = await netGuard.fetch(httpUrl, { timeoutMs: 8_000, redirect: "manual" });
+    const res = await guard.fetch(httpUrl, { timeoutMs: 8_000, redirect: "manual" });
     await res.body?.cancel().catch(() => undefined);
     outcomes.push(httpsRedirectOutcome({ errored: false, status: res.status, location: res.headers.get("location") }));
   } catch {
@@ -529,7 +557,7 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
   }
 
   // Domain expiry via RDAP (best effort, redirect hops validated)
-  const rdap = await getDomainExpiryViaRdap(hostname);
+  const rdap = await getDomainExpiryViaRdap(hostname, guard);
   outcomes.push({
     checkKey: "domain",
     status: domainStatusFor(rdap.daysRemaining),

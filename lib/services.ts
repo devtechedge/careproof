@@ -32,6 +32,7 @@ export async function createAccount(input: {
   email: string;
   password: string;
   name: string;
+  intendedPlan?: string;
 }): Promise<ServiceResult<{ accountId: string }>> {
   const email = input.email.trim().toLowerCase();
   const name = cleanText(input.name, 80);
@@ -40,6 +41,12 @@ export async function createAccount(input: {
   if (input.password.length < 10 || !/[a-zA-Z]/.test(input.password) || !/\d/.test(input.password)) {
     return fail("Password must be at least 10 characters and include letters and numbers.");
   }
+  // Unknown plan identifiers are ignored: the pilot grants Starter
+  // entitlements to everyone, and a query parameter can never create a paid one.
+  const intended =
+    input.intendedPlan && ["starter", "studio", "agency"].includes(input.intendedPlan)
+      ? input.intendedPlan
+      : null;
   const existing = await prisma.account.findUnique({ where: { email } });
   if (existing) return fail("An account with this email already exists.");
   const account = await prisma.account.create({
@@ -48,6 +55,7 @@ export async function createAccount(input: {
       name,
       passwordHash: await hashPassword(input.password),
       plan: "starter",
+      intendedPlan: intended && intended !== "starter" ? intended : null,
     },
   });
   return { ok: true, data: { accountId: account.id } };
@@ -246,16 +254,54 @@ export function shouldRecheck(
   return now - lastStartedAt > limits.freshAfterMs;
 }
 
+export interface GenerateReportInput {
+  period?: string;
+  agencyNote?: string;
+  /** Explicit site selection for a client report. Omit/null for an internal all-sites portfolio report. */
+  siteIds?: string[] | null;
+  /** Display name for the scope (client name) shown in review and on the report. */
+  scopeLabel?: string;
+}
+
 export async function generateReport(
   accountId: string,
-  period = currentPeriod(),
-  agencyNote = ""
+  input: GenerateReportInput = {}
 ): Promise<ServiceResult<{ reportId: string; publicId: string }>> {
   const demo = await rejectDemo(accountId);
   if (demo) return demo;
   const account = await prisma.account.findUnique({ where: { id: accountId } });
   if (!account) return fail("Account not found.");
   const plan = planFor(account.plan);
+  const period = input.period ?? currentPeriod();
+
+  const allSites = await prisma.site.findMany({
+    where: { accountId },
+    orderBy: { createdAt: "asc" },
+  });
+  if (allSites.length === 0) return fail("Add at least one site before generating a report.");
+
+  // Scope resolution: an explicit client scope must contain at least one
+  // site owned by this account. Foreign site IDs are filtered out server-side,
+  // never trusted from the browser.
+  const isPortfolio = !input.siteIds;
+  let scopedSites = allSites;
+  let scopeType = "portfolio";
+  let scopeKey = "all";
+  let scopeLabel = cleanText(input.scopeLabel ?? "", 80);
+  if (!isPortfolio) {
+    const owned = new Set(allSites.map((x) => x.id));
+    const requested = [...new Set(input.siteIds ?? [])].filter((id) => owned.has(id));
+    if (requested.length === 0) {
+      return fail("Select at least one site from your account for this report.");
+    }
+    scopedSites = allSites.filter((x) => requested.includes(x.id));
+    scopeType = "client";
+    scopeKey = [...requested].sort().join(",");
+    if (!scopeLabel) scopeLabel = scopedSites.length === 1 ? scopedSites[0].label : `${scopedSites.length} sites`;
+  } else {
+    scopeLabel = scopeLabel || "All sites";
+  }
+
   const monthCount = await prisma.report.count({
     where: { accountId, period },
   });
@@ -264,21 +310,19 @@ export async function generateReport(
       `Your ${plan.name} plan includes ${plan.reportLimitPerMonth} reports per month. Upgrade for more.`
     );
   }
-  const sites = await prisma.site.findMany({ where: { accountId }, orderBy: { createdAt: "asc" } });
-  if (sites.length === 0) return fail("Add at least one site before generating a report.");
 
   const generationStart = Date.now();
   let rechecked = 0;
   const items: Array<{
     siteLabel: string;
     siteUrl: string;
-    overall: "pass" | "warn" | "fail";
+    overall: "pass" | "warn" | "fail" | "info";
     checksJson: string;
     observedAt: Date;
     fresh: boolean;
   }> = [];
 
-  for (const site of sites) {
+  for (const site of scopedSites) {
     let run = await latestRunForSite(site.id);
     if (shouldRecheck(Date.now(), run ? run.startedAt.getTime() : null, rechecked, generationStart)) {
       const freshRun = await runChecksForSite(accountId, site.id, "report");
@@ -308,20 +352,27 @@ export async function generateReport(
     contactEmail: account.contactEmail,
     isDemo: account.isDemo,
   });
-  const note = cleanText(agencyNote, 600);
+  const note = cleanText(input.agencyNote ?? "", 600);
 
-  // Regenerating a draft for the same period replaces its items atomically
-  // (no duplicate drafts, no half-created reports). Published reports stay
-  // immutable snapshots.
+  // Drafts are reused per (account, period, scope): a draft for one client
+  // never overwrites another client's draft. Published reports stay immutable
+  // snapshots of exactly the sites saved at generation time.
   const report = await prisma.$transaction(async (tx) => {
     const existingDraft = await tx.report.findFirst({
-      where: { accountId, period, status: "draft" },
+      where: { accountId, period, status: "draft", scopeKey },
     });
     if (existingDraft) {
       await tx.reportItem.deleteMany({ where: { reportId: existingDraft.id } });
       return tx.report.update({
         where: { id: existingDraft.id },
-        data: { agencyNote: note, brandingJson, items: { create: items } },
+        data: {
+          agencyNote: note,
+          brandingJson,
+          scopeType,
+          scopeKey,
+          scopeLabel,
+          items: { create: items },
+        },
       });
     }
     return tx.report.create({
@@ -329,6 +380,9 @@ export async function generateReport(
         accountId,
         publicId,
         period,
+        scopeType,
+        scopeKey,
+        scopeLabel,
         agencyNote: note,
         brandingJson,
         status: "draft",
@@ -393,6 +447,8 @@ export async function listReports(accountId: string) {
     publicId: r.publicId,
     period: r.period,
     status: r.status,
+    scopeType: r.scopeType,
+    scopeLabel: r.scopeLabel,
     createdAt: r.createdAt,
     siteCount: r.items.length,
     healthCounts: r.items.reduce(

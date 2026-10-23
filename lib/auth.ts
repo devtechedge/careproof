@@ -21,6 +21,7 @@ export interface Account {
   plan: string;
   isDemo: boolean;
   sessionId?: string;
+  intendedPlanLabel?: string | null;
 }
 
 export async function createSession(accountId: string): Promise<void> {
@@ -72,6 +73,8 @@ export async function currentAccount(): Promise<Account | null> {
     plan: a.plan,
     isDemo: a.isDemo,
     sessionId,
+    intendedPlanLabel:
+      a.intendedPlan === 'studio' ? 'Studio' : a.intendedPlan === 'agency' ? 'Agency' : null,
   };
 }
 

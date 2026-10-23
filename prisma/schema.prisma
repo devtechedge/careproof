@@ -18,6 +18,7 @@ model Account {
   logoUrl      String?
   contactEmail String?
   plan         String    @default("starter") // starter | studio | agency | demo
+  intendedPlan String? // tier chosen at signup; pilot keeps starter entitlements
   isDemo       Boolean   @default(false)
   createdAt    DateTime  @default(now())
   sessions     Session[]
@@ -79,6 +80,9 @@ model Report {
   account      Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
   publicId     String       @unique
   period       String // YYYY-MM
+  scopeType    String       @default("portfolio") // client | portfolio
+  scopeKey     String       @default("all") // "all" or sorted site-id hash; drafts reuse per scope
+  scopeLabel   String       @default("") // display name for the scope
   agencyNote   String       @default("")
   brandingJson String // snapshot: {name, accentColor, logoUrl, contactEmail}
   status       String       @default("draft") // draft | published

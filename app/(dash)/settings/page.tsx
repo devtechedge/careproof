@@ -23,7 +23,9 @@ export default async function SettingsPage({
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
           {account.email} - {plan.name} plan ({plan.siteLimit} sites, {plan.reportLimitPerMonth} reports/month).
-          Plan changes are manual during the pilot; reply to any CareProof email to switch.
+          {account.intendedPlanLabel
+            ? `You chose ${account.intendedPlanLabel} at signup. The pilot is free: every account currently runs with Starter limits, and paid plans activate only when billing goes live.`
+            : "Plan changes are manual during the pilot; reply to any CareProof email to switch."}
         </p>
       </div>
 
