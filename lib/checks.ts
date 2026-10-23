@@ -1,7 +1,9 @@
-import tls from "node:tls";
+import { GuardError, netGuard } from "./net-guard";
 import { normalizeSiteUrl } from "./validation";
 
 // Deterministic site checks. No AI, no third-party APIs, hard timeouts everywhere.
+// ALL outbound network operations go through the net guard (lib/net-guard.ts):
+// validated destinations, pinned DNS, per-hop redirect validation, timeouts.
 // Pure helpers are exported for unit tests; runners do the network work.
 
 export type CheckStatus = "pass" | "warn" | "fail" | "info";
@@ -39,37 +41,20 @@ export interface FetchedPage {
 
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
-export async function fetchWithTimeout(
+export async function fetchPage(
   url: string,
-  init: RequestInit & { timeoutMs?: number; redirect?: "follow" | "manual" } = {}
-): Promise<Response> {
-  const { timeoutMs = 10_000, ...rest } = init;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, {
-      ...rest,
-      signal: controller.signal,
-      headers: {
-        "user-agent": "CareProofBot/1.0 (+site care reports)",
-        ...(rest.headers ?? {}),
-      },
-    });
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-export async function fetchPage(url: string, timeoutMs = 12_000): Promise<FetchedPage> {
+  timeoutMs = 12_000,
+  guard: { fetch: typeof netGuard.fetch } = netGuard
+): Promise<FetchedPage> {
   const t0 = performance.now();
-  const res = await fetchWithTimeout(url, { timeoutMs, redirect: "follow" });
+  const res = await guard.fetch(url, { timeoutMs, redirect: "follow" });
   const ttfbMs = Math.round(performance.now() - t0);
-  const reader = res.body?.getReader();
   let bytes = 0;
   const chunks: Uint8Array[] = [];
   let totalMs = 0;
-  if (reader) {
+  if (res.body) {
     const t1 = performance.now();
+    const reader = res.body.getReader();
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -77,7 +62,7 @@ export async function fetchPage(url: string, timeoutMs = 12_000): Promise<Fetche
         bytes += value.byteLength;
         if (bytes <= MAX_BODY_BYTES) chunks.push(value);
         if (bytes > MAX_BODY_BYTES) {
-          await reader.cancel();
+          await reader.cancel().catch(() => undefined);
           break;
         }
       }
@@ -91,9 +76,9 @@ export async function fetchPage(url: string, timeoutMs = 12_000): Promise<Fetche
     offset += c.byteLength;
   }
   const headers: Record<string, string> = {};
-  res.headers.forEach((v, k) => {
+  for (const [k, v] of res.headers as unknown as Iterable<[string, string]>) {
     headers[k.toLowerCase()] = v;
-  });
+  }
   return {
     finalUrl: res.url || url,
     status: res.status,
@@ -103,6 +88,19 @@ export async function fetchPage(url: string, timeoutMs = 12_000): Promise<Fetche
     bytes,
     bodyText: new TextDecoder("utf-8", { fatal: false }).decode(merged),
   };
+}
+
+async function guardedFetchTextOrStatus(
+  url: string,
+  timeoutMs: number
+): Promise<{ ok: boolean; status: number; text: string }> {
+  const res = await netGuard.fetch(url, { timeoutMs, redirect: "follow" });
+  if (res.status >= 200 && res.status < 300) {
+    const text = await res.text();
+    return { ok: true, status: res.status, text: text.slice(0, 512 * 1024) };
+  }
+  await res.body?.cancel().catch(() => undefined);
+  return { ok: false, status: res.status, text: "" };
 }
 
 export function daysUntil(dateLike: string | Date): number {
@@ -136,16 +134,12 @@ export interface HeaderScore {
 }
 
 export function scoreSecurityHeaders(headers: Record<string, string>): HeaderScore {
-  const checks: Array<[string, string, RegExp | null]> = [
-    ["strict-transport-security", "HSTS", null],
-    ["content-security-policy", "Content-Security-Policy", null],
-    ["x-content-type-options", "X-Content-Type-Options", null],
-    ["referrer-policy", "Referrer-Policy", null],
-    [
-      "x-frame-options",
-      "X-Frame-Options (or CSP frame-ancestors)",
-      null,
-    ],
+  const checks: Array<[string, string]> = [
+    ["strict-transport-security", "HSTS"],
+    ["content-security-policy", "Content-Security-Policy"],
+    ["x-content-type-options", "X-Content-Type-Options"],
+    ["referrer-policy", "Referrer-Policy"],
+    ["x-frame-options", "X-Frame-Options (or CSP frame-ancestors)"],
   ];
   let score = 0;
   const missing: string[] = [];
@@ -209,47 +203,65 @@ export function hasFaviconLink(html: string): boolean {
   return /<link\b[^>]*rel\s*=\s*["'][^"']*icon[^"']*["']/i.test(html);
 }
 
+/**
+ * Pure classifier for the HTTP->HTTPS redirect check. An unreachable HTTP
+ * endpoint proves nothing about redirects, so it reports info (not verified),
+ * never pass. Only an observed 3xx whose Location is an https:// URL passes.
+ */
+export function httpsRedirectOutcome(
+  result: { errored?: boolean; status?: number; location?: string | null }
+): CheckOutcome {
+  if (result.errored) {
+    return {
+      checkKey: "httpsRedirect",
+      status: "info",
+      value: "HTTP endpoint unreachable",
+      detail: "Could not verify the http-to-https redirect; port 80 did not answer.",
+    };
+  }
+  const status = result.status ?? 0;
+  const location = result.location ?? "";
+  const redirectsUp = [301, 302, 307, 308].includes(status) && location.startsWith("https://");
+  if (redirectsUp) {
+    return {
+      checkKey: "httpsRedirect",
+      status: "pass",
+      value: "Redirects to HTTPS",
+      detail: "",
+    };
+  }
+  return {
+    checkKey: "httpsRedirect",
+    status: "fail",
+    value: `HTTP status ${status}`,
+    detail: "Visitors on http:// are not redirected to https://.",
+  };
+}
+
 export async function getTlsExpiry(
   hostname: string,
   timeoutMs = 8_000
 ): Promise<{ daysRemaining: number | null; issuer: string | null }> {
-  return new Promise((resolve) => {
-    let settled = false;
-    const finish = (r: { daysRemaining: number | null; issuer: string | null }) => {
-      if (!settled) {
-        settled = true;
-        resolve(r);
+  try {
+    const socket = await netGuard.connectTls(hostname, timeoutMs);
+    try {
+      const cert = socket.getPeerCertificate();
+      if (cert && cert.valid_to) {
+        const dn = cert.issuer as { O?: string | string[]; CN?: string | string[] } | undefined;
+        const first = (v: string | string[] | undefined): string | null =>
+          Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
+        return {
+          daysRemaining: daysUntil(cert.valid_to),
+          issuer: first(dn?.O) ?? first(dn?.CN),
+        };
       }
-    };
-    const socket = tls.connect(
-      { host: hostname, port: 443, servername: hostname, timeout: timeoutMs },
-      () => {
-        try {
-          const cert = socket.getPeerCertificate();
-          if (cert && cert.valid_to) {
-            const dn = cert.issuer as { O?: string | string[]; CN?: string | string[] } | undefined;
-            const first = (v: string | string[] | undefined): string | null =>
-              Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
-            finish({
-              daysRemaining: daysUntil(cert.valid_to),
-              issuer: first(dn?.O) ?? first(dn?.CN),
-            });
-          } else {
-            finish({ daysRemaining: null, issuer: null });
-          }
-        } catch {
-          finish({ daysRemaining: null, issuer: null });
-        } finally {
-          socket.destroy();
-        }
-      }
-    );
-    socket.on("error", () => finish({ daysRemaining: null, issuer: null }));
-    socket.on("timeout", () => {
+      return { daysRemaining: null, issuer: null };
+    } finally {
       socket.destroy();
-      finish({ daysRemaining: null, issuer: null });
-    });
-  });
+    }
+  } catch {
+    return { daysRemaining: null, issuer: null };
+  }
 }
 
 export interface RdapResult {
@@ -257,20 +269,24 @@ export interface RdapResult {
   registrar: string | null;
 }
 
-export async function getDomainExpiryViaRdap(
-  hostname: string
-): Promise<RdapResult> {
+export async function getDomainExpiryViaRdap(hostname: string): Promise<RdapResult> {
   const labels = hostname.split(".");
   const domain =
     labels.length > 2 && !/^(co|com|org|net|gov|ac)\.[a-z]{2}$/i.test(labels.slice(-2).join("."))
       ? labels.slice(-2).join(".")
       : hostname;
   try {
-    const res = await fetchWithTimeout(
-      `https://rdap.org/domain/${encodeURIComponent(domain)}`,
-      { timeoutMs: 8_000, redirect: "follow", headers: { accept: "application/rdap+json" } }
-    );
-    if (!res.ok) return { daysRemaining: null, registrar: null };
+    // rdap.org redirects to the authoritative registry server; every hop is
+    // validated by the guard before it is followed.
+    const res = await netGuard.fetch(`https://rdap.org/domain/${encodeURIComponent(domain)}`, {
+      timeoutMs: 8_000,
+      redirect: "follow",
+      headers: { accept: "application/rdap+json" },
+    });
+    if (!res.ok) {
+      await res.body?.cancel().catch(() => undefined);
+      return { daysRemaining: null, registrar: null };
+    }
     const data = (await res.json()) as {
       events?: Array<{ eventAction?: string; eventDate?: string }>;
       entities?: Array<{ roles?: string[]; vcardArray?: unknown[] }>;
@@ -327,7 +343,7 @@ async function checkUptime(
         checkKey: "uptime",
         status: "fail",
         value: "No response",
-        detail: "The site did not respond within the timeout.",
+        detail: "The site did not respond within the timeout or was refused by the network guard.",
       },
       page: null,
     };
@@ -395,13 +411,13 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
         : "All standard protective headers present.",
     });
 
-    // robots + sitemap + favicon
+    // robots + sitemap (sitemap URL comes from the page's robots.txt: validated by the guard)
     try {
-      const robotsRes = await fetchWithTimeout(new URL("/robots.txt", page.finalUrl).toString(), {
-        timeoutMs: 8_000,
-      });
-      if (robotsRes.ok) {
-        const robotsText = await robotsRes.text();
+      const robots = await guardedFetchTextOrStatus(
+        new URL("/robots.txt", page.finalUrl).toString(),
+        8_000
+      );
+      if (robots.ok) {
         outcomes.push({
           checkKey: "robots",
           status: "pass",
@@ -409,29 +425,20 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
           detail: "robots.txt is reachable.",
         });
         const sitemapUrl =
-          findSitemapInRobots(robotsText) ??
+          findSitemapInRobots(robots.text) ??
           new URL("/sitemap.xml", page.finalUrl).toString();
-        try {
-          const sitemapRes = await fetchWithTimeout(sitemapUrl, { timeoutMs: 8_000 });
-          outcomes.push({
-            checkKey: "sitemap",
-            status: sitemapRes.ok ? "pass" : "warn",
-            value: sitemapRes.ok ? "Found" : "Not reachable",
-            detail: sitemapRes.ok ? sitemapUrl : `Expected at ${sitemapUrl}.`,
-          });
-        } catch {
-          outcomes.push({
-            checkKey: "sitemap",
-            status: "warn",
-            value: "Not reachable",
-            detail: `Expected at ${sitemapUrl}.`,
-          });
-        }
+        const sitemap = await guardedFetchTextOrStatus(sitemapUrl, 8_000);
+        outcomes.push({
+          checkKey: "sitemap",
+          status: sitemap.ok ? "pass" : "warn",
+          value: sitemap.ok ? "Found" : "Not reachable",
+          detail: sitemap.ok ? sitemapUrl : `Expected at ${sitemapUrl}.`,
+        });
       } else {
         outcomes.push({
           checkKey: "robots",
           status: "warn",
-          value: `HTTP ${robotsRes.status}`,
+          value: `HTTP ${robots.status}`,
           detail: "No robots.txt was returned.",
         });
         outcomes.push({
@@ -441,20 +448,23 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
           detail: "No robots.txt to declare a sitemap.",
         });
       }
-    } catch {
+    } catch (err) {
+      const reason = err instanceof GuardError ? err.message : "robots.txt did not respond.";
       outcomes.push({
         checkKey: "robots",
         status: "warn",
         value: "Not reachable",
-        detail: "robots.txt did not respond.",
+        detail: reason,
       });
     }
 
-    const faviconOk =
-      hasFaviconLink(page.bodyText) ||
-      (await fetchWithTimeout(new URL("/favicon.ico", page.finalUrl).toString(), {
-        timeoutMs: 6_000,
-      }).then((r) => r.ok).catch(() => false));
+    let faviconOk = hasFaviconLink(page.bodyText);
+    if (!faviconOk) {
+      faviconOk = await guardedFetchTextOrStatus(
+        new URL("/favicon.ico", page.finalUrl).toString(),
+        6_000
+      ).then((r) => r.ok && r.status !== 0);
+    }
     outcomes.push({
       checkKey: "favicon",
       status: faviconOk ? "pass" : "warn",
@@ -462,7 +472,7 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
       detail: faviconOk ? "" : "No favicon link tag and no /favicon.ico.",
     });
 
-    // homepage link sample
+    // homepage link sample (each discovered URL goes through the guard)
     const links = extractLinks(page.bodyText, page.finalUrl);
     if (links.length === 0) {
       outcomes.push({
@@ -475,12 +485,13 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
       const broken: string[] = [];
       await mapWithConcurrency(links, 5, async (link) => {
         try {
-          const res = await fetchWithTimeout(link, {
+          const res = await netGuard.fetch(link, {
             timeoutMs: 8_000,
             redirect: "follow",
             method: "GET",
             headers: { range: "bytes=0-0" },
           });
+          await res.body?.cancel().catch(() => undefined);
           if (res.status >= 400) broken.push(link);
         } catch {
           broken.push(link);
@@ -495,7 +506,7 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
     }
   }
 
-  // TLS certificate (direct, independent of HTTP layer)
+  // TLS certificate (direct, pinned to a validated address, SNI preserved)
   const tlsInfo = await getTlsExpiry(hostname);
   outcomes.push({
     checkKey: "ssl",
@@ -507,28 +518,17 @@ export async function runSiteChecks(rawUrl: string): Promise<CheckOutcome[]> {
     detail: tlsInfo.issuer ? `Issuer: ${tlsInfo.issuer}.` : "",
   });
 
-  // HTTP -> HTTPS redirect
+  // HTTP -> HTTPS redirect (manual: we inspect the first hop ourselves)
   try {
     const httpUrl = url.replace(/^https:/, "http:");
-    const res = await fetchWithTimeout(httpUrl, { timeoutMs: 8_000, redirect: "manual" });
-    const location = res.headers.get("location") ?? "";
-    const redirectsUp = [301, 302, 307, 308].includes(res.status) && location.startsWith("https://");
-    outcomes.push({
-      checkKey: "httpsRedirect",
-      status: redirectsUp ? "pass" : "fail",
-      value: redirectsUp ? "Redirects to HTTPS" : `HTTP status ${res.status}`,
-      detail: redirectsUp ? "" : "Visitors on http:// are not redirected to https://.",
-    });
+    const res = await netGuard.fetch(httpUrl, { timeoutMs: 8_000, redirect: "manual" });
+    await res.body?.cancel().catch(() => undefined);
+    outcomes.push(httpsRedirectOutcome({ errored: false, status: res.status, location: res.headers.get("location") }));
   } catch {
-    outcomes.push({
-      checkKey: "httpsRedirect",
-      status: "pass",
-      value: "No HTTP endpoint",
-      detail: "Port 80 refused the connection; site is HTTPS-only.",
-    });
+    outcomes.push(httpsRedirectOutcome({ errored: true }));
   }
 
-  // Domain expiry via RDAP (best effort)
+  // Domain expiry via RDAP (best effort, redirect hops validated)
   const rdap = await getDomainExpiryViaRdap(hostname);
   outcomes.push({
     checkKey: "domain",
