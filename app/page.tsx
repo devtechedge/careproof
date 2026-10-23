@@ -138,8 +138,8 @@ export default async function LandingPage() {
           <div className="mx-auto max-w-6xl px-6 py-16">
             <h2 className="text-2xl font-bold tracking-tight">Flat pricing, not per site</h2>
             <p className="mt-2 text-slate-600">
-              Incumbents charge per site or lock white-label behind enterprise tiers.
-              Every CareProof plan includes your branding on the reports.
+              WordPress tools charge per site. Monitoring tools sell dashboards, not client
+              documents. Every CareProof plan includes your branding on the reports.
             </p>
             <div className="mt-8 grid gap-6 sm:grid-cols-3">
               {[
@@ -214,16 +214,17 @@ export default async function LandingPage() {
             <div className="rounded-lg border border-slate-200 bg-white p-6">
               <h3 className="font-semibold">Mixed stacks, one report</h3>
               <p className="mt-2 text-sm text-slate-600">
-                ManageWP and MainWP only cover WordPress. CareProof checks any public URL,
-                so the Webflow and Shopify clients sit in the same monthly report as the
-                WordPress ones.
+                ManageWP, MainWP and WP Umbrella only cover WordPress. CareProof checks any
+                public URL, so the Webflow and Shopify clients sit in the same monthly report
+                as the WordPress ones.
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-6">
               <h3 className="font-semibold">Your brand, every tier</h3>
               <p className="mt-2 text-sm text-slate-600">
-                Watermarks and sender addresses belong to free tiers elsewhere. On CareProof
-                the report carries your name, colour and logo from day one.
+                Elsewhere white-label is an upcharge (UptimeRobot gates it to its $35/mo tier,
+                Databox charges an extra $80/mo). CareProof puts your name, colour and logo on
+                every plan from day one.
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-6">
