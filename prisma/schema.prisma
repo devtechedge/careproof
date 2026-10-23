@@ -1,0 +1,109 @@
+// CareProof schema. Portable types only (String/Int/DateTime, string plan values)
+// so the Postgres/Neon switch at deploy is a provider flip plus regenerated client.
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Account {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  accentColor  String    @default("#2563eb")
+  logoUrl      String?
+  contactEmail String?
+  plan         String    @default("starter") // starter | studio | agency | demo
+  isDemo       Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  sessions     Session[]
+  sites        Site[]
+  reports      Report[]
+}
+
+model Session {
+  id        String   @id // sha256 of the cookie token
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([accountId])
+}
+
+model Site {
+  id        String   @id @default(cuid())
+  accountId String
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  label     String
+  url       String
+  createdAt DateTime @default(now())
+  runs      CheckRun[]
+
+  @@index([accountId])
+}
+
+model CheckRun {
+  id         String        @id @default(cuid())
+  siteId     String
+  site       Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  accountId  String
+  startedAt  DateTime      @default(now())
+  finishedAt DateTime?
+  status     String        @default("ok") // ok | error
+  trigger    String        @default("manual") // manual | report | seed
+  results    CheckResult[]
+
+  @@index([siteId, startedAt])
+}
+
+model CheckResult {
+  id       String   @id @default(cuid())
+  runId    String
+  run      CheckRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  checkKey String
+  status   String // pass | warn | fail | info
+  value    String
+  detail   String   @default("")
+
+  @@index([runId])
+}
+
+model Report {
+  id           String       @id @default(cuid())
+  accountId    String
+  account      Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  publicId     String       @unique
+  period       String // YYYY-MM
+  agencyNote   String       @default("")
+  brandingJson String // snapshot: {name, accentColor, logoUrl, contactEmail}
+  status       String       @default("draft") // draft | published
+  createdAt    DateTime     @default(now())
+  items        ReportItem[]
+
+  @@index([accountId, period])
+}
+
+model ReportItem {
+  id         String  @id @default(cuid())
+  reportId   String
+  report     Report  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  siteLabel  String
+  siteUrl    String
+  overall    String // pass | warn | fail
+  checksJson String // snapshot [{checkKey,status,value,detail}]
+  note       String  @default("")
+}
+
+model RateLimit {
+  id        String   @id @default(cuid())
+  bucket    String // e.g. "signup:1.2.3.4" or "runcheks:account123"
+  action    String
+  createdAt DateTime @default(now())
+
+  @@index([bucket, action, createdAt])
+}
