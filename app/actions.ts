@@ -117,7 +117,7 @@ export async function runChecksForm(formData: FormData): Promise<void> {
   back("/dashboard", { msg: "Checks complete." });
 }
 
-export async function runAllChecksForm(_formData: FormData): Promise<void> {
+export async function runAllChecksForm(): Promise<void> {
   const accountId = await requireAccountId();
   const rl = await rateLimit(
     `runcheks:${accountId}`,
