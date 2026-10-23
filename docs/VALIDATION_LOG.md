@@ -36,3 +36,9 @@ Days below assume start day D0 (to be set on approval).
 - Fact: deployed and verified live at https://careproof-tau.vercel.app - /api/health ok + db up, landing renders seeded sample report link, /dashboard 307s to /login, /r/<id> renders demo-branded report. Public repo https://github.com/devtechedge/careproof with full build history.
 - Fact: 35/35 tests green against the Neon `careproof_test` database; production build green; lint clean.
 - Still zero external contact: no outreach, no community posts. Metrics unchanged (0 conversations, 0 pilots, 0 MRR).
+
+### 2026-10-24 (session 3, research complete)
+- Fact: 13 prospects verified from public pages (docs/prospects/PROSPECT_LIST.md; researcher stopped at 13 rather than pad - 2 candidates disqualified). Outreach kit complete (cold + follow-up + demo script + objections + pilot offer + tracking log). Still ZERO contact of any kind.
+- Fact: competitor pricing re-verified today (docs/COMPETITIVE_POSITIONING.md); one landing claim corrected as a result.
+- Fact: payment providers verified today (docs/BILLING_AND_MRR.md): Paddle + Lemon Squeezy both accept Indian sellers as MoR at 5% + 50c; Stripe India invite-only confirmed.
+- Funnel baseline unchanged: conversations 0, pilots 0, customers 0, MRR $0.
