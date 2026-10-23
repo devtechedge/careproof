@@ -41,3 +41,21 @@ Append-only log. Each entry: date, decision, why, what would change it.
 17. DEPLOYED (Dev approved): https://careproof-tau.vercel.app (+ careproof-devtechedge1.vercel.app), Vercel project `careproof` team `devtechedge1`, git-linked to main (auto-deploy on push). Production demo workspace seeded.
 
 18. BUILD FIXES discovered by real deploys: `postinstall: prisma generate` (generated client is gitignored, Vercel build needs it) and `process.loadEnvFile()` inside lib/db.ts (import hoisting runs db.ts before scripts can load .env).
+
+## 2026-10-24 (security-hardening session, branch only)
+
+19. OUTBOUND SECURITY: single net-guard module (undici agent with guarded connect-time DNS lookup = pinning; per-hop redirect validation; ports 80/443 only; ipaddr.js range battery incl. cloud metadata, CGNAT, IPv4-mapped IPv6). All checks (homepage, links, robots/sitemap, favicon, RDAP, TLS) route through it. Test-only hooks exist for loopback-origin tests and never bypass literal checks.
+
+20. DEMO READ-ONLY: enforced in the service layer (every mutation), not just UI. Shared demo password can no longer be changed; visitors cannot alter the demo.
+
+21. REPORT FRESHNESS CONTRACT: reports disclose per-site observation timestamps; generation refreshes sites older than 24h bounded by 4 rechecks / 25s; a 7-day staleness banner warns when data is old; drafts regenerate atomically per period (no duplicates); published reports are immutable and revocable (unpublish kills the share link; getReportByPublicId returns published only).
+
+22. HTTPS-REDIRECT SEMANTICS: refused port-80 is "info - not verified", never pass. Only an observed 3xx to https passes.
+
+23. BOUNDED BURSTS: run-all processes 5 sites per invocation (never-checked first, then oldest), staying inside serverless limits.
+
+24. PASSWORD CHANGE rotates sessions (all other sessions deleted).
+
+25. SEED INTERLOCK: seeder refuses a database named "careproof" without ALLOW_PROD_SEED=1.
+
+26. POSITIONING CORRECTION from verified competitor research: white-label reports are NOT rare among WP incumbents (MainWP $29 includes them; WP Umbrella base includes them). Landing copy corrected to lead with mixed-stack technical audit + flat pricing + white-label-included vs the verified upcharges (UptimeRobot $35/mo tier, Databox +$80/mo). Name-collision risk recorded (careproof.ai NDIS, careproof.net healthcare, careproof.com parked/for-sale, possible 2019 USPTO fabric mark UNVERIFIED); rename decision + professional trademark search gated before paid launch.

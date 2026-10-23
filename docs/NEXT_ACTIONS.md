@@ -1,26 +1,24 @@
 # Next Actions
 
-Updated: 2026-10-24 (end of session 1).
+Updated: 2026-10-24 (end of session 3, security-hardening branch, NOT merged).
 
 ## Blocked on Dev (approval needed)
 
-1. DONE 2026-10-24: deploy approved and live at https://careproof-tau.vercel.app (Vercel project `careproof`, git auto-deploy from main). Remaining choice: custom domain to buy/attach.
-2. Sending outreach: 15-email batch in docs/outreach/ needs his read + approval + send (his email accounts). Landing + sample report are now live to point people at.
-3. Community posts: any Reddit/FB group participation runs from his accounts with full-text approval.
-4. Payments: verify Lemon Squeezy + PayPal India eligibility for CareProof before any live checkout; alternative to re-check: Stripe India invite status.
-5. Name check: trademark/domain search for "CareProof" before paid launch (product is now public under this name).
+1. MERGE + DEPLOY the security-hardening branch (10 commits: SSRF guard, demo read-only, freshness, sessions, copy fixes). After merge: `DATABASE_URL_UNPOOLED=<prod> npx prisma db push` adds the observedAt/fresh columns to production, then push main auto-deploys. Production DB is otherwise untouched.
+2. Outreach batch: prospect list + templates ready; needs his read + approval + send (his accounts).
+3. Name/trademark: professional search for "CareProof" (collision facts in docs/COMPETITIVE_POSITIONING.md); rename decision before paid launch.
+4. Payments: verify Lemon Squeezy India eligibility at signup (see BILLING_AND_MRR.md checklist) before any checkout work.
+5. Custom domain choice (careproof.com is parked/for-sale per RDAP 2026-10-24).
 
-## Next session (no approval needed, local only)
+## Next session (local, no approval needed)
 
-1. Add scheduled re-checks (cron-style daily check run per site) behind a feature flag; keeps Studio tier promise honest.
-2. Generated-binary PDF (pdfkit) if print-to-PDF gets negative feedback in pilots.
-3. Report diffing vs previous month (the "what changed" section strengthens proof-of-care).
-4. Multi-month report history view.
-5. Add /api/health endpoint check to own dogfood list.
+1. Re-check run of the deployed product post-merge (health, sample report, demo read-only live).
+2. Report diffing vs previous period ("what changed" section) - top of the feature backlog, gated on pilot demand.
+3. Scheduled re-checks (cron-style) only after pilot demand + architecture check.
+4. Email sending only if pilots ask for it.
 
-## Standing weekly goals (from validation start)
+## Standing weekly goals (unchanged; clock starts when outreach is approved)
 
-- Week 1: 15 outreach, 5 conversations, 2 pilots.
+- Week 1: 15 outreach, 5 qualified conversations, 2 pilot commitments.
 - Week 2: 25 outreach total, first 2 paying customers.
-- Week 3-4: 10 customers, first community content shipped.
-- Metrics to track every Friday in VALIDATION_LOG.md: conversations, pilots, customers, MRR, churn, acquisition cost (hours), margin.
+- Track every Friday in VALIDATION_LOG.md: conversations, pilots, customers, MRR, churn, acquisition cost (hours), margin.

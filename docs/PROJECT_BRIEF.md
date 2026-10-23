@@ -41,4 +41,4 @@ $2k MRR path: 25 Studio + 15 Starter + 8 Agency = $2,302 MRR.
 
 ## Status
 
-MVP built and tested locally; validation assets prepared; nothing sent, posted, or deployed. See docs/VALIDATION_LOG.md and docs/NEXT_ACTIONS.md.
+Deployed (careproof-tau.vercel.app) since 2026-10-24 morning; security-hardening branch (2026-10-24, session 3) adds the outbound network guard, read-only demo, report freshness contract, session rotation and copy corrections - 107 tests green, NOT merged (approval-gated). Validation assets complete (kit: INTERVIEW_SCRIPT.md + KIT.md + prospects list); zero outreach sent. See docs/SECURITY_AUDIT.md, docs/SECURITY_TEST_RESULTS.md, docs/COMPETITIVE_POSITIONING.md, docs/VALIDATION_LOG.md, docs/NEXT_ACTIONS.md.
