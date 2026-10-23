@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { publishReportForm, saveNoteForm } from "@/app/actions";
+import { publishReportForm, saveNoteForm, unpublishReportForm } from "@/app/actions";
 import { CopyButton } from "@/components/forms";
 import { ReportItems, type ReportBranding } from "@/components/report-view";
 import { currentAccount } from "@/lib/auth";
 import { getReportForOwner } from "@/lib/services";
-import { parseChecksSnapshot, periodLabel, worstOverall } from "@/lib/report";
+import { countStaleItems, parseChecksSnapshot, periodLabel, worstOverall } from "@/lib/report";
 
 export const metadata = { title: "Report - CareProof" };
 export const dynamic = "force-dynamic";
@@ -24,7 +24,10 @@ export default async function ReportDetailPage({
     siteUrl: item.siteUrl,
     overall: item.overall as "pass" | "warn" | "fail",
     checks: parseChecksSnapshot(item.checksJson),
+    observedAt: item.observedAt,
+    fresh: item.fresh,
   }));
+  const staleCount = countStaleItems(report.items.map((i) => i.observedAt));
   const overall = worstOverall(items);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const shareUrl = `${siteUrl}/r/${report.publicId}`;
@@ -68,9 +71,23 @@ export default async function ReportDetailPage({
               </button>
             </form>
           ) : (
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-              Published
-            </span>
+            <>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                Published
+              </span>
+              {account.isDemo ? null : (
+                <form action={unpublishReportForm}>
+                  <input type="hidden" name="reportId" value={report.id} />
+                  <input type="hidden" name="publicId" value={report.publicId} />
+                  <button
+                    type="submit"
+                    className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Unpublish
+                  </button>
+                </form>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -87,24 +104,33 @@ export default async function ReportDetailPage({
         <h2 className="text-sm font-semibold text-slate-900">Note to clients</h2>
         <p className="mt-1 text-xs text-slate-500">
           Appears at the top of the report. Plain text, max 600 characters.
+          {report.status === "published" ? " Published reports are immutable; unpublish to edit." : ""}
         </p>
         <input type="hidden" name="reportId" value={report.id} />
         <textarea
           name="note"
           rows={3}
           defaultValue={report.agencyNote}
+          disabled={report.status === "published" || account.isDemo}
           placeholder="This month we updated plugins on all WordPress sites and renewed the SSL certificate for Bakery Co."
-          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600"
+          className="mt-2 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-600 disabled:bg-slate-50 disabled:text-slate-500"
         />
         <button
           type="submit"
-          className="mt-2 rounded-md border border-slate-300 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+          disabled={report.status === "published" || account.isDemo}
+          className="mt-2 rounded-md border border-slate-300 px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
         >
           Save note
         </button>
       </form>
 
-      <ReportItems items={items} branding={branding} note={report.agencyNote} period={periodLabel(report.period)} />
+      <ReportItems
+        items={items}
+        branding={branding}
+        note={report.agencyNote}
+        period={periodLabel(report.period)}
+        staleCount={staleCount}
+      />
     </div>
   );
 }

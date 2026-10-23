@@ -30,10 +30,16 @@ export default async function SettingsPage({
       {msg ? (
         <p className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">{msg}</p>
       ) : null}
+      {account.isDemo ? (
+        <p className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+          The demo workspace is read-only: branding and password changes are disabled.
+        </p>
+      ) : null}
       {err ? (
         <p className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">{err}</p>
       ) : null}
 
+      {account.isDemo ? null : (
       <form action={saveBrandingForm} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="font-semibold">Report branding</h2>
         <p className="text-xs text-slate-500">Appears on every report you generate, including already published ones at render time for drafts.</p>
@@ -88,7 +94,9 @@ export default async function SettingsPage({
           Save branding
         </button>
       </form>
+      )}
 
+      {account.isDemo ? null : (
       <form action={changePasswordForm} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="font-semibold">Change password</h2>
         <div>
@@ -117,6 +125,7 @@ export default async function SettingsPage({
           Change password
         </button>
       </form>
+      )}
     </div>
   );
 }

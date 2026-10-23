@@ -40,13 +40,13 @@ export default async function DashboardPage({
             {sites.length} of {plan.siteLimit} sites on the {plan.name} plan.
           </p>
         </div>
-        {sites.length > 0 ? (
+        {sites.length > 0 && !account.isDemo ? (
           <form action={runAllChecksForm}>
             <button
               type="submit"
               className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
-              Run checks on all sites
+              Run checks (5 at a time)
             </button>
           </form>
         ) : null}
@@ -57,12 +57,19 @@ export default async function DashboardPage({
           {msg}
         </p>
       ) : null}
+      {account.isDemo ? (
+        <p className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
+          You are in the shared demo workspace: everything is read-only so every visitor sees the
+          same product. Create your own account to add sites and generate reports.
+        </p>
+      ) : null}
       {err ? (
         <p className="rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
           {err}
         </p>
       ) : null}
 
+      {account.isDemo ? null : (
       <form
         action={addSiteForm}
         className="grid gap-3 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-[1fr_1fr_auto]"
@@ -100,6 +107,7 @@ export default async function DashboardPage({
           </button>
         </div>
       </form>
+      )}
 
       {sites.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">
@@ -145,6 +153,9 @@ export default async function DashboardPage({
                     )}
                   </td>
                   <td className="px-4 py-3">
+                    {account.isDemo ? (
+                      <span className="text-xs text-slate-400">Read-only</span>
+                    ) : (
                     <div className="flex justify-end gap-2">
                       <form action={runChecksForm}>
                         <input type="hidden" name="siteId" value={site.id} />
@@ -165,6 +176,7 @@ export default async function DashboardPage({
                         </button>
                       </form>
                     </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -179,6 +191,11 @@ export default async function DashboardPage({
           Generates a branded report from the latest check results (runs fresh checks for any
           site that has none). Optionally add a note your clients will read at the top.
         </p>
+        {account.isDemo ? (
+          <p className="mt-4 text-sm text-slate-500">
+            Report generation is disabled in the demo. The pre-generated sample report is on the Reports page.
+          </p>
+        ) : (
         <form action={generateReportForm} className="mt-4 flex flex-col gap-3 sm:flex-row">
           <input
             name="note"
@@ -193,6 +210,7 @@ export default async function DashboardPage({
             Generate report
           </button>
         </form>
+        )}
       </section>
     </div>
   );

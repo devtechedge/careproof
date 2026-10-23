@@ -13,7 +13,9 @@ import {
   generateReport,
   publishReport,
   removeSite,
+  runChecksBatch,
   runChecksForSite,
+  unpublishReport,
   updateBranding,
   updateReportNote,
 } from "@/lib/services";
@@ -126,16 +128,16 @@ export async function runAllChecksForm(): Promise<void> {
     3_600_000
   );
   if (!rl.allowed) back("/dashboard", { err: "Check limit reached for this hour." });
-  const { prisma } = await import("@/lib/db");
-  const sites = await prisma.site.findMany({
-    where: { accountId },
-    select: { id: true },
-  });
-  for (const site of sites) {
-    await runChecksForSite(accountId, site.id, "manual");
-  }
+  const result = await runChecksBatch(accountId, 5);
+  if (!result.ok) back("/dashboard", { err: result.error });
   revalidatePath("/dashboard");
-  back("/dashboard", { msg: `Checks complete for ${sites.length} sites.` });
+  const { checked, remaining } = result.data;
+  back(
+    "/dashboard",
+    remaining > 0
+      ? { msg: `Checked ${checked} sites (${remaining} remaining - run again to continue).` }
+      : { msg: `Checks complete for ${checked} sites.` }
+  );
 }
 
 // ---- reports ----
@@ -167,6 +169,16 @@ export async function publishReportForm(formData: FormData): Promise<void> {
   back(`/reports/${String(formData.get("reportId") ?? "")}`, { msg: "Report published." });
 }
 
+export async function unpublishReportForm(formData: FormData): Promise<void> {
+  const accountId = await requireAccountId();
+  const reportId = String(formData.get("reportId") ?? "");
+  const result = await unpublishReport(accountId, reportId);
+  if (!result.ok) back("/dashboard", { err: result.error });
+  revalidatePath(`/reports/${reportId}`);
+  revalidatePath(`/r/${String(formData.get("publicId") ?? "")}`);
+  back(`/reports/${reportId}`, { msg: "Report unpublished - its share link no longer works." });
+}
+
 export async function saveNoteForm(formData: FormData): Promise<void> {
   const accountId = await requireAccountId();
   const reportId = String(formData.get("reportId") ?? "");
@@ -196,10 +208,12 @@ export async function saveBrandingForm(formData: FormData): Promise<void> {
 
 export async function changePasswordForm(formData: FormData): Promise<void> {
   const accountId = await requireAccountId();
+  const account = await currentAccount();
   const result = await changePassword(
     accountId,
     String(formData.get("currentPassword") ?? ""),
-    String(formData.get("newPassword") ?? "")
+    String(formData.get("newPassword") ?? ""),
+    account?.sessionId
   );
   if (!result.ok) back("/settings", { err: result.error });
   back("/settings", { msg: "Password changed." });

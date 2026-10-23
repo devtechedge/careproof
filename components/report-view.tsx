@@ -1,4 +1,5 @@
 import { CHECK_META, type CheckStatus } from "@/lib/checks";
+import { observedLabel } from "@/lib/report";
 
 export interface ReportCheck {
   checkKey: string;
@@ -21,6 +22,8 @@ export interface ReportItemView {
   siteUrl: string;
   overall: "pass" | "warn" | "fail";
   checks: ReportCheck[];
+  observedAt?: Date | string | null;
+  fresh?: boolean;
 }
 
 const STATUS_STYLE: Record<CheckStatus, string> = {
@@ -46,11 +49,13 @@ export function ReportItems({
   branding,
   note,
   period,
+  staleCount = 0,
 }: {
   items: ReportItemView[];
   branding: ReportBranding;
   note: string;
   period: string;
+  staleCount?: number;
 }) {
   const accent = branding.accentColor;
   return (
@@ -88,6 +93,20 @@ export function ReportItems({
         </p>
       ) : null}
 
+      {staleCount > 0 ? (
+        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
+          {staleCount} of {items.length} site observation{staleCount === 1 ? "" : "s"} date back
+          more than 7 days. Each site below shows exactly when its checks ran; treat older
+          observations as a historical snapshot, not a statement of current health.
+        </p>
+      ) : null}
+
+      <p className="mt-4 text-xs leading-5 text-slate-500">
+        Results below are point-in-time public observations (uptime, certificate, headers, links,
+        registry data). They do not verify backups, software updates, or remediation work unless
+        the agency documents it in the note above.
+      </p>
+
       <div className="mt-6 space-y-8">
         {items.map((item) => {
           const counts = {
@@ -101,6 +120,10 @@ export function ReportItems({
                 <div>
                   <h3 className="font-semibold text-slate-900">{item.siteLabel}</h3>
                   <p className="text-xs text-slate-500">{item.siteUrl}</p>
+                  <p className="text-xs text-slate-400">
+                    {observedLabel(item.observedAt)}
+                    {item.fresh ? " - rechecked for this report" : ""}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <span className={`rounded-full px-2 py-0.5 font-semibold ${STATUS_STYLE[item.overall]}`}>
@@ -138,8 +161,11 @@ export function ReportItems({
       <footer className="mt-8 border-t border-slate-100 pt-4 text-xs text-slate-400">
         <p>
           Prepared by {branding.name}
-          {branding.contactEmail ? ` - ${branding.contactEmail}` : ""}. Checks ran against the
-          public site with hard timeouts; results reflect the moment of the check run.
+          {branding.contactEmail ? ` - ${branding.contactEmail}` : ""}. Each check ran against the
+          public site at the observation time shown per site, with hard timeouts. Results reflect
+          that moment and are not a guarantee of future availability or security. Any backup,
+          update, or remediation work is the agency&#39;s own claim, not something these checks
+          can verify.
         </p>
       </footer>
     </div>

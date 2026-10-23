@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { PrintButton } from "@/components/forms";
 import { ReportItems, type ReportBranding } from "@/components/report-view";
 import { getReportByPublicId } from "@/lib/services";
-import { parseChecksSnapshot, periodLabel } from "@/lib/report";
+import { countStaleItems, parseChecksSnapshot, periodLabel } from "@/lib/report";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +26,10 @@ export default async function PublicReportPage({
     siteUrl: item.siteUrl,
     overall: item.overall as "pass" | "warn" | "fail",
     checks: parseChecksSnapshot(item.checksJson),
+    observedAt: item.observedAt,
+    fresh: item.fresh,
   }));
+  const staleCount = countStaleItems(report.items.map((i) => i.observedAt));
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -38,6 +41,7 @@ export default async function PublicReportPage({
         branding={branding}
         note={report.agencyNote}
         period={periodLabel(report.period)}
+        staleCount={staleCount}
       />
     </div>
   );
