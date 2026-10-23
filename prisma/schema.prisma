@@ -89,14 +89,16 @@ model Report {
 }
 
 model ReportItem {
-  id         String  @id @default(cuid())
+  id         String    @id @default(cuid())
   reportId   String
-  report     Report  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  report     Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
   siteLabel  String
   siteUrl    String
   overall    String // pass | warn | fail
   checksJson String // snapshot [{checkKey,status,value,detail}]
-  note       String  @default("")
+  note       String    @default("")
+  observedAt DateTime? // when the included checks actually ran
+  fresh      Boolean   @default(false) // true when rechecked during this report's generation
 }
 
 model RateLimit {
