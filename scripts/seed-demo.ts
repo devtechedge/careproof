@@ -149,6 +149,8 @@ async function main() {
       siteUrl: demo.url,
       overall: overallOf(list),
       checksJson: snapshotChecks(list),
+      observedAt: new Date(),
+      fresh: false,
     });
   }
 
