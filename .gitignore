@@ -47,3 +47,5 @@ dev.db-journal
 .tmp/
 generated/client/
 !.env.example
+playwright-report/
+test-results/
