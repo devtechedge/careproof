@@ -137,6 +137,9 @@ describe("reports", () => {
     const rep = await generateReport(accountA, undefined, "Monthly note here");
     expect(rep.ok).toBe(true);
     if (!rep.ok) return;
+    // drafts are private: the share link works only after publishing
+    expect(await getReportByPublicId(rep.data.publicId)).toBeNull();
+    expect((await publishReport(accountA, rep.data.reportId)).ok).toBe(true);
     const publicView = await getReportByPublicId(rep.data.publicId);
     expect(publicView).not.toBeNull();
     expect(publicView?.items.length).toBe(1);

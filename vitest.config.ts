@@ -14,6 +14,8 @@ export default defineConfig({
     // tests hit a remote Postgres; sequential round trips need headroom
     testTimeout: 30_000,
     hookTimeout: 60_000,
+    // DB suites share one test database: never run test files in parallel
+    fileParallelism: false,
     env: {
       DATABASE_URL: process.env.DATABASE_URL_TEST ?? "",
       SESSION_PEPPER: process.env.SESSION_PEPPER ?? "test-pepper",
