@@ -31,6 +31,10 @@ let accountA: string;
 let accountB: string;
 
 beforeAll(async () => {
+  // idempotent across runs against a persistent test database
+  await prisma.account.deleteMany({
+    where: { email: { in: ["a@test.example", "b@test.example"] } },
+  });
   const a = await createAccount({
     email: "a@test.example",
     password: "password1234",
