@@ -63,3 +63,28 @@ export function parseChecksSnapshot(json: string): CheckOutcome[] {
     return [];
   }
 }
+
+export const STALE_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Count items whose observations are older than the staleness banner threshold. */
+export function countStaleItems(
+  observed: Array<Date | string | null | undefined>
+): number {
+  return observed.filter((o) => {
+    if (!o) return true;
+    const t = typeof o === "string" ? new Date(o).getTime() : o.getTime();
+    return Date.now() - t > STALE_AFTER_MS;
+  }).length;
+}
+
+/** Human label for an observation timestamp, with age once it is at least a day old. */
+export function observedLabel(observedAt: Date | string | null | undefined): string {
+  if (!observedAt) return "Observation time unknown";
+  const d = typeof observedAt === "string" ? new Date(observedAt) : observedAt;
+  const ageDays = Math.floor((Date.now() - d.getTime()) / 86_400_000);
+  const stamp =
+    d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" }) +
+    " UTC";
+  if (ageDays <= 0) return `Observed ${stamp}`;
+  return `Observed ${stamp} (${ageDays} day${ageDays === 1 ? "" : "s"} ago)`;
+}
