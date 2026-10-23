@@ -132,7 +132,7 @@ async function main() {
   const overallOf = (list: CheckOutcome[]) =>
     list.some((c) => c.status === "fail") ? "fail" : list.some((c) => c.status === "warn") ? "warn" : "pass";
 
-  const items: Array<{ siteLabel: string; siteUrl: string; overall: string; checksJson: string }> = [];
+  const items: Array<{ siteLabel: string; siteUrl: string; overall: string; checksJson: string; observedAt: Date; fresh: boolean }> = [];
   for (const demo of DEMO_SITES) {
     const site = await prisma.site.create({
       data: { accountId: account.id, label: demo.label, url: demo.url },
