@@ -1,61 +1,73 @@
 # CareProof
 
-Branded monthly website care reports for web agencies. Add the client sites you manage, run deterministic checks, generate a client-ready branded report with a share link. Any stack (WordPress, Webflow, Shopify, custom), no plugin, no site credentials, no AI.
+Branded monthly website-care reports for web agencies: prove what the retainer pays for, on every client site, across every stack.
 
-Separate project from HandoffKit (n8n handover packs). No shared code.
+[![Live Demo](https://img.shields.io/badge/live-demo-blue)](https://careproof-tau.vercel.app)
+[![Next.js](https://img.shields.io/badge/Next.js%2016-App%20Router-black)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://www.typescriptlang.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-## Status (2026-10-24)
+## Live Demo
 
-Live: https://careproof-tau.vercel.app (Vercel, git auto-deploy from main). Repo: github.com/devtechedge/careproof (public, full build history). 35 tests passing, lint clean, production build green, production demo workspace seeded. No outreach sent yet. Docs in `docs/`.
+https://careproof-tau.vercel.app
+
+> Real production deployment with a real Postgres database (Neon), not a mock.
+> Explore the shared read-only demo workspace with `demo@careproof.test` / `demo-password-1`,
+> or create your own free account and add real sites. Checks run against public
+> pages only, with hard timeouts, and no site credentials are ever requested.
+
+## Screenshots
+
+| Landing | Landing (dark) |
+|---|---|
+| ![Landing](docs/screenshots/01-landing.png) | ![Landing dark](docs/screenshots/02-landing-dark.png) |
+
+| Dashboard (demo) | Client report |
+|---|---|
+| ![Dashboard](docs/screenshots/04-dashboard.png) | ![Report](docs/screenshots/03-sample-report.png) |
+
+## What it does
+
+Agencies charge monthly care retainers and then struggle to show clients what the money maintains. Incumbent reporting is WordPress-only or uptime-only. CareProof checks any public URL (WordPress, Webflow, Shopify, custom) and turns the results into a branded, client-ready report in minutes.
+
+- Eleven deterministic checks per site: uptime, response speed, page weight, TLS certificate expiry, HTTPS redirect, security headers, robots.txt, sitemap, favicon, sampled homepage links, and domain expiry via the public RDAP registry.
+- White-label on every plan: agency name, accent color, logo.
+- Reports are point-in-time snapshots with per-site observation timestamps and a staleness warning when data is old.
+- Share links are unlisted and revocable; published reports are immutable.
+- Flat pricing tiers with server-side plan limits (Starter $19 / Studio $49 / Agency $99).
+- Outbound requests run through a centralized network guard: validated destinations, pinned DNS resolution, per-hop redirect checks, blocked private and metadata addresses.
+- Light and dark themes, print-to-PDF ready report layout.
 
 ## Stack
 
-- Next.js 16 (App Router) + TypeScript + Tailwind 4
-- Prisma 7 with PostgreSQL on Neon (@prisma/adapter-pg); pooled URL at runtime, unpooled for `db push`
-- scrypt password hashing, DB-backed sessions (sha256 of cookie token), HttpOnly cookies
-- Vitest for unit + service tests
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 16 (App Router, server actions) |
+| Language | TypeScript (strict) |
+| UI | React 19, Tailwind CSS 4 |
+| Database | PostgreSQL on Neon, Prisma 7 (pg adapter) |
+| Auth | scrypt password hashing, hashed DB sessions, HttpOnly cookies |
+| Tests | Vitest (unit + service), Playwright (browser smokes) |
 
-## Setup
+## Quick start
+
+Requires Node 22+ and a Postgres database (a free Neon project works).
 
 ```
 npm install
-cp .env.example .env        # fill in your Neon Postgres URLs
-npx prisma generate
-npx prisma db push          # use DATABASE_URL_UNPOOLED for DDL
-npm run db:seed             # optional: demo workspace
-npm run dev                 # http://localhost:3000
+cp .env.example .env          # fill in your Postgres URLs and a session pepper
+npx prisma db push            # use the unpooled URL for DDL
+npm run dev                   # http://localhost:3000
 ```
 
-Environment: see `.env.example`. `DATABASE_URL` is the pooled Neon string the app uses; `DATABASE_URL_UNPOOLED` is for `prisma db push` (DDL is blocked through the pooler). The test suite runs against a separate `careproof_test` database and needs ~30s per heavy test (remote Postgres round trips). Note: with the local `.env` pointing at the production `careproof` database, local dev shares prod data at pilot scale; branch the database before doing experimental work.
+Optional: seed a labelled read-only demo workspace with `npm run db:seed` (refuses to run against a database named `careproof` unless you set `ALLOW_PROD_SEED=1`).
 
-Demo login after seeding: `demo@careproof.test` / `demo-password-1` (demo data is labelled in the UI and in the report).
+Run the test suite with `npm test` (unit and service tests against a dedicated test database, 107 tests) and the browser smokes with `npx playwright test`.
 
-## What the checks do
+## Security
 
-Uptime/HTTP status, TTFB, HTML weight, TLS certificate expiry (direct TLS read), HTTP-to-HTTPS redirect, security header score (HSTS/CSP/XCTO/XFO/Referrer-Policy), robots.txt, sitemap, favicon, sampled homepage link check (capped at 25 links), domain expiry via public RDAP. Every check has a hard timeout (6-12s). Fail/warn thresholds are in `lib/checks.ts` with unit tests.
+Tenant data is scoped per account at the query layer, cross-account access is tested, sessions rotate on password change, and every outbound check runs through the SSRF guard described above. See `SECURITY.md` for the honest threat model, including what is intentionally not implemented yet (email verification, password reset).
 
-## Commands
+## License
 
-- `npm run dev` / `npm run build` / `npm run start`
-- `npm test` (Vitest; pushes schema to the `careproof_test` database first)
-- `npm run lint`
-- `npm run db:push`, `npm run db:seed`
-
-## Security notes and known limitations
-
-- Tenant isolation: every query is scoped by `accountId`; cross-account access returns "not found". Covered by `tests/services.test.ts`.
-- SSRF guard: blocks localhost, private/loopback/link-local IPv4, IPv6 literals, `.local`, `.internal`, `.onion`, credential URLs. This is a hostname guard, not a full DNS-resolution guard; a determined DNS-rebinding setup is out of MVP scope. Documented, accepted risk at pilot scale.
-- Rate limits (DB sliding window): signup 5/IP/day, login 10/email/hour, checks 60/account/hour, reports 15/account/hour.
-- Share links: random 28-hex-char id, `noindex, nofollow` meta; anyone with the link sees exactly that report.
-- Report "PDF" is the browser's print-to-PDF on a print-styled page (deliberate MVP choice; binary PDF generation is a post-validation enhancement).
-- Email sending is not implemented; the agency copies the share link.
-- No email verification / password reset yet (add before paid launch).
-- Plan limits enforced locally from `lib/plans.ts`; no live billing.
-
-## Deploy (already live)
-
-Vercel project `careproof` (team devtechedge1), git-linked to main: every push to main auto-deploys. Env: `DATABASE_URL` (Neon pooled, production target only), `SESSION_PEPPER`, `NEXT_PUBLIC_SITE_URL=https://careproof-tau.vercel.app`. Schema changes: `DATABASE_URL_UNPOOLED=... npx prisma db push` locally. The generated Prisma client is gitignored and rebuilt by `postinstall`.
-
-## Legal
-
-`/legal/terms`, `/legal/privacy`, `/legal/refunds` are templates marked not-legal-advice; review before any paid launch.
+[MIT](LICENSE)
