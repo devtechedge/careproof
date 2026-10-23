@@ -16,8 +16,8 @@ export default async function DashLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="no-print border-b border-[var(--border)] bg-[var(--surface)]">
-        <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-6">
+        <nav className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6">
+          <div className="flex items-center gap-4 sm:gap-6">
             <Link href="/dashboard" className="font-bold tracking-tight">
               CareProof
             </Link>
@@ -31,13 +31,13 @@ export default async function DashLayout({
               Settings
             </Link>
           </div>
-          <div className="flex items-center gap-4 text-sm">
+          <div className="flex min-w-0 items-center gap-3 text-sm">
             {account.isDemo ? (
-              <span className="rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
+              <span className="rounded-full border border-amber-300 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-400">
                 Demo workspace
               </span>
             ) : null}
-            <span className="text-[var(--muted)]">
+            <span className="hidden min-w-0 truncate text-[var(--muted)] sm:inline">
               {account.name} - {plan.name}
             </span>
             <form action={authLogOut}>

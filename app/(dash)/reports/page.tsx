@@ -23,7 +23,8 @@ export default async function ReportsPage() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
             <thead className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
               <tr>
                 <th className="px-4 py-3">Period</th>
@@ -71,6 +72,7 @@ export default async function ReportsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
