@@ -5,13 +5,14 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: careproof-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL_TEST }}
-      DATABASE_URL_TEST: ${{ secrets.DATABASE_URL_TEST }}
-      DATABASE_URL_TEST_UNPOOLED: ${{ secrets.DATABASE_URL_TEST_UNPOOLED }}
       SESSION_PEPPER: ci-pepper
     steps:
       - uses: actions/checkout@v4
@@ -20,18 +21,41 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Create per-run test database
+        id: cidb
+        env:
+          DB_TEMPLATE_POOLED: ${{ secrets.DATABASE_URL_TEST }}
+          DB_TEMPLATE_UNPOOLED: ${{ secrets.DATABASE_URL_TEST_UNPOOLED }}
+          RUN_TAG: ${{ github.run_id }}
+        run: node scripts/ci-db.mjs create
       - name: Unit and service tests
+        env:
+          DATABASE_URL: ${{ steps.cidb.outputs.pooled }}
+          DATABASE_URL_TEST: ${{ steps.cidb.outputs.pooled }}
+          DATABASE_URL_TEST_UNPOOLED: ${{ steps.cidb.outputs.unpooled }}
         run: npm test
       - name: Typecheck
         run: npm run typecheck
       - name: Lint
         run: npm run lint
       - name: Production build
+        env:
+          DATABASE_URL: ${{ steps.cidb.outputs.pooled }}
         run: npm run build
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
       - name: Browser smokes
+        env:
+          DATABASE_URL_TEST: ${{ steps.cidb.outputs.pooled }}
+          DATABASE_URL_TEST_UNPOOLED: ${{ steps.cidb.outputs.unpooled }}
         run: npx playwright test
+      - name: Drop per-run test database
+        if: always()
+        env:
+          DB_TEMPLATE_POOLED: ${{ secrets.DATABASE_URL_TEST }}
+          DB_TEMPLATE_UNPOOLED: ${{ secrets.DATABASE_URL_TEST_UNPOOLED }}
+          RUN_TAG: ${{ github.run_id }}
+        run: node scripts/ci-db.mjs drop
       - name: Upload Playwright report on failure
         if: failure()
         uses: actions/upload-artifact@v4
