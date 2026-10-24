@@ -151,7 +151,7 @@ export default async function LandingPage() {
                   price: "$19",
                   per: "/month",
                   for: "Freelancers up to 15 client sites.",
-                  features: ["15 sites", "8 reports/month", "Branded client reports", "Share link + print to PDF (browser)"],
+                  features: ["15 sites", "8 reports/month"],
                   cta: "Start with Starter",
                 },
                 {
@@ -160,7 +160,7 @@ export default async function LandingPage() {
                   price: "$49",
                   per: "/month",
                   for: "Small agencies up to 50 sites.",
-                  features: ["50 sites", "Everything in Starter", "30 reports/month", "Client-scoped reports"],
+                  features: ["50 sites", "30 reports/month", "Everything in Starter"],
                   cta: "Choose Studio",
                   highlight: true,
                 },
@@ -170,7 +170,7 @@ export default async function LandingPage() {
                   price: "$99",
                   per: "/month",
                   for: "Agencies up to 150 sites.",
-                  features: ["150 sites", "Everything in Studio", "90 reports/month"],
+                  features: ["150 sites", "90 reports/month", "Everything in Starter"],
                   cta: "Choose Agency",
                 },
               ].map((tier) => (
@@ -206,7 +206,11 @@ export default async function LandingPage() {
                 </div>
               ))}
             </div>
-            <p className="mt-6 text-xs text-[var(--muted)]">
+            <p className="mt-4 text-sm text-[var(--muted)]">
+              Every plan includes the same product: 11 deterministic checks per site, client-scoped
+              reports, your branding, share links and print to PDF. Tiers differ only in quotas.
+            </p>
+            <p className="mt-4 text-xs text-[var(--faint)]">
               Free during the pilot: signup starts nothing on your card. Planned paid tiers in USD; annual billing (10x monthly) arrives with checkout. Plan limits
               shown are enforced in the product today; checkout goes live after the pilot.
             </p>
