@@ -70,3 +70,7 @@ Only after demand validation: scheduled recurring checks, automated email delive
 ## Deployment readiness
 
 Ready for review. Merge order on approval: prisma db push (additive columns) against production, then merge to main for auto-deploy, then reseed demo (ALLOW_PROD_SEED=1) so the public sample carries the corrected narrative and scope labels.
+
+## Addendum 2026-10-24 (qa-pass-1): brief execution
+
+All 16 items of the QA/PM/VC/EM brief are addressed on this branch (16 = P0 1-6, P1 7-12, P2 13-16). Highlights beyond the security-test addendum: quota usage line in Settings, onboarding panel, deterministic sample link, tier cards list only quota differences, AGENTS.md rewritten with real rules, scaffold SVGs removed, login/signup removed from sitemap, PM_MEMO.md gates every deferred feature on evidence. Route sizes recorded from `next build` (landing First Load JS ~103 kB; only client component shipped to marketing pages is the theme toggle). Mobile 390/768 overflow re-verified clean; print emulation clean (no-print hidden, 6/6 sections break-inside avoid, white background). Deploy gates unchanged: owner approves, prod db push first (Event + WaitlistSignup tables, additive), then merge, then reseed demo (sample link stays stable thanks to the deterministic id).

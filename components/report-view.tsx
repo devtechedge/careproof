@@ -92,7 +92,7 @@ export function ReportItems({
       ) : null}
 
       {branding.isDemo ? (
-        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-amber-600">
+        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
           Demo workspace - sample data, not live checks
         </p>
       ) : null}
@@ -122,7 +122,7 @@ export function ReportItems({
             <section key={item.id} className="break-inside-avoid">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <h3 className="font-semibold text-[var(--ink)]">{item.siteLabel}</h3>
+                  <h2 className="font-semibold text-[var(--ink)]">{item.siteLabel}</h2>
                   <p className="text-xs text-[var(--muted)]">{item.siteUrl}</p>
                   <p className="text-xs text-[var(--faint)]">
                     {observedLabel(item.observedAt)}

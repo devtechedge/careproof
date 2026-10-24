@@ -13,6 +13,8 @@ Branded monthly website-care reports for web agencies: prove what the retainer p
 https://careproof-tau.vercel.app
 
 > Real production deployment with a real Postgres database (Neon), not a mock.
+> The demo report keeps a stable share link (the seed uses a deterministic public id),
+> so https://careproof-tau.vercel.app/r/demo00000000000000000000000 survives redeploys.
 > Explore the shared read-only demo workspace with `demo@careproof.test` / `demo-password-1`,
 > or create your own free account and add real sites. Checks run against public
 > pages only, with hard timeouts, and no site credentials are ever requested.
@@ -63,7 +65,7 @@ npm run dev                   # http://localhost:3000
 
 Optional: seed a labelled read-only demo workspace with `npm run db:seed` (refuses to run against a database named `careproof` unless you set `ALLOW_PROD_SEED=1`).
 
-Run the test suite with `npm test` (unit and service tests against a dedicated test database, 107 tests) and the browser smokes with `npx playwright test`.
+Run the test suite with `npm test` (unit and service tests against a dedicated test database) and the browser smokes with `npx playwright test`. Funnel events are server-side only; see docs/FUNNEL.md.
 
 ## Security
 

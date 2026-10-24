@@ -20,7 +20,7 @@ export default function LoginPage() {
         </div>
         <p className="mt-4 text-center text-sm text-[var(--muted)]">
           No account yet?{" "}
-          <Link href="/signup" className="font-semibold text-blue-600 hover:text-blue-700">
+          <Link href="/signup" className="font-semibold text-blue-700 hover:text-blue-800">
             Create one
           </Link>
         </p>

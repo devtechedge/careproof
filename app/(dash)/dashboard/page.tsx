@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 function StatusPill({ status }: { status: "pass" | "warn" | "fail" | "info" }) {
   const map = {
     pass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
-    warn: "bg-amber-500/10 text-amber-700 dark:text-amber-400 dark:text-amber-300 border-amber-500/30",
+    warn: "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30",
     fail: "bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/30",
     info: "bg-[var(--surface-2)] text-[var(--muted)] border-[var(--border)]",
   } as const;
@@ -59,7 +59,7 @@ export default async function DashboardPage({
         </p>
       ) : null}
       {account.isDemo ? (
-        <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-700 dark:text-amber-400 dark:text-amber-300">
+        <p className="rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-800 dark:text-amber-300">
           You are in the shared demo workspace: everything is read-only so every visitor sees the
           same product. Create your own account to add sites and generate reports.
         </p>
