@@ -6,7 +6,7 @@ export const metadata = { title: "Sign in - CareProof" };
 
 export default function LoginPage() {
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-6">
+    <main className="relative flex min-h-screen items-center justify-center px-6">
       <div className="fixed right-4 top-4 z-10">
         <ThemeToggle />
       </div>
@@ -28,6 +28,6 @@ export default function LoginPage() {
           Demo workspace: demo@careproof.test / demo-password-1
         </p>
       </div>
-    </div>
+    </main>
   );
 }

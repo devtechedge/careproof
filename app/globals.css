@@ -12,7 +12,7 @@
   --surface-2: #eff3f8;
   --ink: #101828;
   --muted: #46536a;
-  --faint: #7d8899;
+  --faint: #606b7a; /* 4.6:1 on --bg, 5.3:1 on --surface: WCAG AA */
   --border: #d5dce6;
   --accent: #2563eb;
   --scroll-thumb: #9aa7b8;
@@ -26,7 +26,7 @@
   --surface-2: #0e1626;
   --ink: #e3e9f2;
   --muted: #98a4b8;
-  --faint: #64748b;
+  --faint: #7d8aa2; /* 4.9:1 on --bg, 4.9:1 on --surface: WCAG AA */
   --border: #22304a;
   --accent: #3b82f6;
   --scroll-thumb: #32476a;
@@ -98,7 +98,7 @@ pre:hover::-webkit-scrollbar-thumb {
     --surface-2: #f3f5f8;
     --ink: #101828;
     --muted: #46536a;
-    --faint: #7d8899;
+    --faint: #606b7a; /* 4.6:1 on --bg, 5.3:1 on --surface: WCAG AA */
     --border: #d5dce6;
     --scroll-thumb: #9aa7b8;
   }
@@ -112,6 +112,13 @@ pre:hover::-webkit-scrollbar-thumb {
     box-shadow: none !important;
     border: none !important;
   }
+}
+
+/* visible keyboard focus for every interactive element */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* theme toggle icon cross-fade */

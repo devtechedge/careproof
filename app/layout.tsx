@@ -13,12 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CareProof - Branded monthly care reports for web agencies",
+  title: "CareProof - client-ready website care reports",
   description:
-    "Prove your website care retainers with branded monthly reports. Uptime, SSL, security headers, links and more for every client site, any stack, no plugin.",
+    "Prove your website care retainers with branded, client-ready reports. Point-in-time checks: uptime, SSL, security headers, links and more for every client site, any stack, no plugin.",
   icons: { icon: "/favicon.svg" },
   openGraph: {
-    title: "CareProof - branded website care reports",
+    title: "CareProof - client-ready website care reports",
     description:
       "Point-in-time health checks and branded client reports for web agencies. Any stack, no plugin.",
     url: "https://careproof-tau.vercel.app",

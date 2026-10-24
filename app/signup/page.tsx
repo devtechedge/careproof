@@ -18,7 +18,7 @@ export default async function SignUpPage({
   const planParam = typeof sp.plan === "string" ? sp.plan : "";
   const selectedPlan = PLAN_LABELS[planParam] ? planParam : null;
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-6">
+    <main className="relative flex min-h-screen items-center justify-center px-6">
       <div className="fixed right-4 top-4 z-10">
         <ThemeToggle />
       </div>
@@ -50,6 +50,6 @@ export default async function SignUpPage({
           </Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { authLogIn, authSignUp } from "@/app/actions";
 
 function FieldError({ error }: { error?: string }) {
@@ -25,13 +26,28 @@ export function SignUpForm({ plan }: { plan?: string | null }) {
         <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="name">
           Agency or your name
         </label>
-        <input id="name" name="name" required className={inputClass} placeholder="Northside Web Studio" />
+        <input
+          id="name"
+          name="name"
+          required
+          className={inputClass}
+          placeholder="Northside Web Studio"
+          defaultValue={state?.name ?? ""}
+        />
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="email">
           Email
         </label>
-        <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} />
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          className={inputClass}
+          defaultValue={state?.email ?? ""}
+        />
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="password">
@@ -67,7 +83,15 @@ export function LogInForm() {
         <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="email">
           Email
         </label>
-        <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} />
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          className={inputClass}
+          defaultValue={state?.email ?? ""}
+        />
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium text-[var(--ink)]" htmlFor="password">
@@ -101,6 +125,28 @@ export function PrintButton({ label }: { label: string }) {
       className="no-print rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--ink)] hover:bg-[var(--surface-2)]"
     >
       {label}
+    </button>
+  );
+}
+
+export function SubmitButton({
+  children,
+  pendingLabel,
+  className = "rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700",
+}: {
+  children: React.ReactNode;
+  pendingLabel?: string;
+  className?: string;
+}) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      aria-busy={pending}
+      className={`${className} disabled:opacity-60`}
+    >
+      {pending && pendingLabel ? pendingLabel : children}
     </button>
   );
 }

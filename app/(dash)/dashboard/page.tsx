@@ -1,4 +1,5 @@
 import { addSiteForm, generatePortfolioForm, generateReportForm, removeSiteForm, runAllChecksForm, runChecksForm } from "@/app/actions";
+import { SubmitButton } from "@/components/forms";
 import { currentAccount } from "@/lib/auth";
 import { planFor } from "@/lib/plans";
 import { listSites } from "@/lib/services";
@@ -99,12 +100,7 @@ export default async function DashboardPage({
           />
         </div>
         <div className="flex items-end">
-          <button
-            type="submit"
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-          >
-            Add site
-          </button>
+          <SubmitButton pendingLabel="Adding...">Add site</SubmitButton>
         </div>
       </form>
       )}
@@ -117,13 +113,14 @@ export default async function DashboardPage({
         <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
+            <caption className="sr-only">Client sites with their latest check status</caption>
             <thead className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
               <tr>
-                <th className="px-4 py-3">Site</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Last checks</th>
-                <th className="px-4 py-3">Results</th>
-                <th className="px-4 py-3 text-right">Actions</th>
+                <th scope="col" className="px-4 py-3">Site</th>
+                <th scope="col" className="px-4 py-3">Status</th>
+                <th scope="col" className="px-4 py-3">Last checks</th>
+                <th scope="col" className="px-4 py-3">Results</th>
+                <th scope="col" className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">
@@ -228,13 +225,7 @@ export default async function DashboardPage({
               className="rounded-md border border-[var(--border)] px-3 py-2 text-sm outline-none focus:border-blue-600"
             />
           </div>
-          <button
-            type="submit"
-            disabled={sites.length === 0}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            Generate client report
-          </button>
+          <SubmitButton pendingLabel="Generating...">Generate client report</SubmitButton>
         </form>
         )}
         {sites.length > 0 && !account.isDemo ? (
@@ -247,12 +238,12 @@ export default async function DashboardPage({
               send it to a single client, because it lists all of your other clients.
             </p>
             <form action={generatePortfolioForm} className="mt-2">
-              <button
-                type="submit"
+              <SubmitButton
+                pendingLabel="Generating..."
                 className="rounded-md border border-[var(--border)] px-4 py-2 text-xs font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]"
               >
                 Generate internal portfolio report
-              </button>
+              </SubmitButton>
             </form>
           </details>
         ) : null}

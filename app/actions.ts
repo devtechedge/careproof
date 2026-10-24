@@ -45,29 +45,27 @@ function back(path: string, params: Record<string, string>): never {
 
 // ---- auth (used with useActionState) ----
 
-export async function authSignUp(
-  _prev: { error?: string } | undefined,
-  formData: FormData
-): Promise<{ error?: string }> {
+export type AuthState = { error?: string; email?: string; name?: string };
+
+export async function authSignUp(_prev: AuthState | undefined, formData: FormData): Promise<AuthState> {
   const ip = await clientIp();
   const rl = await rateLimit(`signup:${ip}`, "signup", LIMITS.signupPerIpPerDay, 86_400_000);
   if (!rl.allowed) return { error: "Too many signups from this network. Try again tomorrow." };
 
+  const email = String(formData.get("email") ?? "");
+  const name = String(formData.get("name") ?? "");
   const result = await createAccount({
-    email: String(formData.get("email") ?? ""),
+    email,
     password: String(formData.get("password") ?? ""),
-    name: String(formData.get("name") ?? ""),
+    name,
     intendedPlan: String(formData.get("plan") ?? ""),
   });
-  if (!result.ok) return { error: result.error };
+  if (!result.ok) return { error: result.error, email, name };
   await createSession(result.data.accountId);
   redirect("/dashboard");
 }
 
-export async function authLogIn(
-  _prev: { error?: string } | undefined,
-  formData: FormData
-): Promise<{ error?: string }> {
+export async function authLogIn(_prev: AuthState | undefined, formData: FormData): Promise<AuthState> {
   const email = String(formData.get("email") ?? "");
   const rl = await rateLimit(
     `login:${email.trim().toLowerCase()}`,
@@ -77,7 +75,7 @@ export async function authLogIn(
   );
   if (!rl.allowed) return { error: "Too many attempts. Try again in an hour." };
   const result = await authenticate(email, String(formData.get("password") ?? ""));
-  if (!result.ok) return { error: result.error };
+  if (!result.ok) return { error: result.error, email };
   await createSession(result.data.accountId);
   redirect("/dashboard");
 }

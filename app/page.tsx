@@ -110,7 +110,7 @@ export default async function LandingPage() {
               ],
             ].map(([title, body]) => (
               <div key={title}>
-                <h3 className="text-base font-semibold text-[var(--ink)]">{title}</h3>
+                <h2 className="text-base font-semibold text-[var(--ink)]">{title}</h2>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{body}</p>
               </div>
             ))}

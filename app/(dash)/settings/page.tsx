@@ -1,4 +1,5 @@
 import { changePasswordForm, saveBrandingForm } from "@/app/actions";
+import { SubmitButton } from "@/components/forms";
 import { currentAccount } from "@/lib/auth";
 import { planFor } from "@/lib/plans";
 
@@ -89,12 +90,7 @@ export default async function SettingsPage({
             className={inputClass}
           />
         </div>
-        <button
-          type="submit"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-        >
-          Save branding
-        </button>
+        <SubmitButton pendingLabel="Saving...">Save branding</SubmitButton>
       </form>
       )}
 

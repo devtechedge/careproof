@@ -25,14 +25,15 @@ export default async function ReportsPage() {
         <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
           <div className="overflow-x-auto">
           <table className="w-full min-w-[560px] text-sm">
+            <caption className="sr-only">Generated reports by period and scope</caption>
             <thead className="border-b border-[var(--border)] bg-[var(--surface-2)] text-left text-xs uppercase tracking-wide text-[var(--muted)]">
               <tr>
-                <th className="px-4 py-3">Period</th>
-                <th className="px-4 py-3">Scope</th>
-                <th className="px-4 py-3">Sites</th>
-                <th className="px-4 py-3">Health</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Created</th>
+                <th scope="col" className="px-4 py-3">Period</th>
+                <th scope="col" className="px-4 py-3">Scope</th>
+                <th scope="col" className="px-4 py-3">Sites</th>
+                <th scope="col" className="px-4 py-3">Health</th>
+                <th scope="col" className="px-4 py-3">Status</th>
+                <th scope="col" className="px-4 py-3">Created</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border)]">

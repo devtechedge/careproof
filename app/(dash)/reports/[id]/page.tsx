@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { publishReportForm, saveNoteForm, unpublishReportForm } from "@/app/actions";
-import { CopyButton } from "@/components/forms";
+import { CopyButton, SubmitButton } from "@/components/forms";
 import { ReportItems, type ReportBranding } from "@/components/report-view";
 import { currentAccount } from "@/lib/auth";
 import { getReportForOwner } from "@/lib/services";
@@ -66,12 +66,7 @@ export default async function ReportDetailPage({
           {report.status !== "published" ? (
             <form action={publishReportForm}>
               <input type="hidden" name="reportId" value={report.id} />
-              <button
-                type="submit"
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                Publish
-              </button>
+              <SubmitButton pendingLabel="Publishing...">Publish</SubmitButton>
             </form>
           ) : (
             <>
