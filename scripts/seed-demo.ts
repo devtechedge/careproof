@@ -4,7 +4,6 @@
  * checks) and one published demo report. Safe to re-run: it wipes and recreates
  * only the demo account.
  */
-import { randomBytes } from "node:crypto";
 import { prisma } from "../lib/db";
 import { hashPassword } from "../lib/password";
 import { snapshotChecks } from "../lib/report";
@@ -66,7 +65,15 @@ function outcomes(siteKey: string): CheckOutcome[] {
     ],
     down: [
       { checkKey: "uptime", status: "fail", value: "No response", detail: "The site did not respond within the timeout." },
+      { checkKey: "ttfb", status: "info", value: "Not assessed", detail: "Skipped: the homepage could not be fetched, so this check did not run." },
+      { checkKey: "weight", status: "info", value: "Not assessed", detail: "Skipped: the homepage could not be fetched, so this check did not run." },
       { checkKey: "ssl", status: "info", value: "Could not read certificate" },
+      { checkKey: "httpsRedirect", status: "info", value: "HTTP endpoint unreachable", detail: "Could not verify the http-to-https redirect; port 80 did not answer." },
+      { checkKey: "headers", status: "info", value: "Not assessed", detail: "Skipped: the homepage could not be fetched, so this check did not run." },
+      { checkKey: "robots", status: "info", value: "Not assessed", detail: "Skipped: the homepage could not be fetched, so this check did not run." },
+      { checkKey: "sitemap", status: "info", value: "Not assessed", detail: "Skipped: the homepage could not be fetched, so this check did not run." },
+      { checkKey: "favicon", status: "info", value: "Not assessed", detail: "Skipped: the homepage could not be fetched, so this check did not run." },
+      { checkKey: "links", status: "info", value: "Not assessed", detail: "Skipped: the homepage could not be fetched, so this check did not run." },
       { checkKey: "domain", status: "pass", value: "290 days until expiry", detail: "Registrar: Key-Systems." },
     ],
     domainExpiring: [
@@ -158,7 +165,8 @@ async function main() {
   await prisma.report.create({
     data: {
       accountId: account.id,
-      publicId: randomBytes(14).toString("hex"),
+      // Deterministic so the publicly shared sample link survives reseeds.
+      publicId: "demo00000000000000000000000",
       period,
       scopeType: "portfolio",
       scopeKey: "all",

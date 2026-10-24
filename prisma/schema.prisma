@@ -105,6 +105,22 @@ model ReportItem {
   fresh      Boolean   @default(false) // true when rechecked during this report's generation
 }
 
+model Event {
+  id        String   @id @default(cuid())
+  name      String // page_view | signup_completed | demo_login | report_generated | waitlist_signup
+  accountId String?
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+}
+
+model WaitlistSignup {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("landing")
+  createdAt DateTime @default(now())
+}
+
 model RateLimit {
   id        String   @id @default(cuid())
   bucket    String // e.g. "signup:1.2.3.4" or "runcheks:account123"
