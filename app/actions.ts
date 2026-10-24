@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createSession, currentAccount, destroySession } from "@/lib/auth";
 import { LIMITS, rateLimit } from "@/lib/rateLimit";
+import { isEmail } from "@/lib/validation";
+import { logEvent } from "@/lib/events";
+import { prisma } from "@/lib/db";
 import {
   addSite,
   authenticate,
@@ -78,6 +81,28 @@ export async function authLogIn(_prev: AuthState | undefined, formData: FormData
   if (!result.ok) return { error: result.error, email };
   await createSession(result.data.accountId);
   redirect("/dashboard");
+}
+
+export async function joinWaitlist(
+  _prev: { error?: string; ok?: boolean } | undefined,
+  formData: FormData
+): Promise<{ error?: string; ok?: boolean }> {
+  const ip = await clientIp();
+  const rl = await rateLimit(`waitlist:${ip}`, "waitlist", 5, 3_600_000);
+  if (!rl.allowed) return { error: "Too many attempts. Try again later." };
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!isEmail(email)) return { error: "Enter a valid email address." };
+  try {
+    await prisma.waitlistSignup.upsert({
+      where: { email },
+      update: {},
+      create: { email },
+    });
+    logEvent("waitlist_signup");
+    return { ok: true };
+  } catch {
+    return { error: "Could not save that right now. Please try again." };
+  }
 }
 
 export async function authLogOut(): Promise<void> {

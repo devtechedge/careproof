@@ -107,7 +107,13 @@ export default async function DashboardPage({
 
       {sites.length === 0 ? (
         <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--surface)] p-10 text-center text-sm text-[var(--muted)]">
-          No sites yet. Add the first client site above, then run checks.
+          <p className="font-medium text-[var(--ink)]">How this works</p>
+          <p className="mx-auto mt-2 max-w-xl leading-6">
+            Add a client site URL above. A check run fetches only public pages (no credentials,
+            nothing installed) and records reachability, certificate, redirect, header, link and
+            domain facts at that moment. Generate a client report and we snapshot those results
+            with timestamps; send the share link to your client.
+          </p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">

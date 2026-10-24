@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { authLogIn, authSignUp } from "@/app/actions";
+import { authLogIn, authSignUp, joinWaitlist } from "@/app/actions";
 
 function FieldError({ error }: { error?: string }) {
   if (!error) return null;
@@ -126,6 +126,40 @@ export function PrintButton({ label }: { label: string }) {
     >
       {label}
     </button>
+  );
+}
+
+export function WaitlistForm() {
+  const [state, action, pending] = useActionState(joinWaitlist, undefined);
+  if (state?.ok) {
+    return (
+      <p className="text-sm text-[var(--ink)]" role="status">
+        You are on the list. One email when paid plans go live, nothing else.
+      </p>
+    );
+  }
+  return (
+    <form action={action} className="flex flex-col gap-2 sm:flex-row">
+      <input
+        name="email"
+        type="email"
+        required
+        placeholder="you@yourstudio.com"
+        aria-label="Email for launch updates"
+        className="flex-1 rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm outline-none focus:border-blue-600"
+      />
+      <SubmitButton
+        pendingLabel="Adding..."
+        className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-sm font-semibold text-[var(--muted)] hover:bg-[var(--surface-2)]"
+      >
+        Notify me at launch
+      </SubmitButton>
+      {state?.error ? (
+        <p className="text-xs text-red-600 dark:text-red-400" role="alert">
+          {state.error}
+        </p>
+      ) : null}
+    </form>
   );
 }
 

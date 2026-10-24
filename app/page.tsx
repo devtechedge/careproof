@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { logEvent } from "@/lib/events";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { WaitlistForm } from "@/components/forms";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,7 @@ const CHECKS = [
 ];
 
 export default async function LandingPage() {
+  logEvent("page_view");
   const sample = await sampleReportLink();
   return (
     <div className="flex min-h-screen flex-col">
@@ -249,6 +252,18 @@ export default async function LandingPage() {
                 Per-site pricing punishes growth. Pick a plan by portfolio size and stop
                 doing arithmetic before every client report.
               </p>
+            </div>
+          </div>
+        </section>
+        <section className="border-t border-[var(--border)] bg-[var(--surface)]">
+          <div className="mx-auto max-w-6xl px-6 py-12">
+            <h2 className="text-xl font-bold tracking-tight">Paid plans land soon</h2>
+            <p className="mt-2 max-w-xl text-sm text-[var(--muted)]">
+              The pilot is free. Leave an email and we will send one note when checkout goes
+              live; nothing else, no newsletter.
+            </p>
+            <div className="mt-4 max-w-md">
+              <WaitlistForm />
             </div>
           </div>
         </section>

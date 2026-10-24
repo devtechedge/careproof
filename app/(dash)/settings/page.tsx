@@ -2,6 +2,8 @@ import { changePasswordForm, saveBrandingForm } from "@/app/actions";
 import { SubmitButton } from "@/components/forms";
 import { currentAccount } from "@/lib/auth";
 import { planFor } from "@/lib/plans";
+import { prisma } from "@/lib/db";
+import { currentPeriod } from "@/lib/report";
 
 export const metadata = { title: "Settings - CareProof" };
 export const dynamic = "force-dynamic";
@@ -14,6 +16,11 @@ export default async function SettingsPage({
 }: PageProps<"/settings">) {
   const account = (await currentAccount())!;
   const plan = planFor(account.plan);
+  const period = currentPeriod();
+  const [reportsUsed, sitesUsed] = await Promise.all([
+    prisma.report.count({ where: { accountId: account.id, period } }),
+    prisma.site.count({ where: { accountId: account.id } }),
+  ]);
   const sp = await searchParams;
   const msg = typeof sp.msg === "string" ? sp.msg : null;
   const err = typeof sp.err === "string" ? sp.err : null;
@@ -23,7 +30,8 @@ export default async function SettingsPage({
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          {account.email} - {plan.name} plan ({plan.siteLimit} sites, {plan.reportLimitPerMonth} reports/month).
+          {account.email} - {plan.name} plan. This month: {sitesUsed} of {plan.siteLimit} sites,{" "}
+          {reportsUsed} of {plan.reportLimitPerMonth} reports used.
           {account.intendedPlanLabel
             ? `You chose ${account.intendedPlanLabel} at signup. The pilot is free: every account currently runs with Starter limits, and paid plans activate only when billing goes live.`
             : "Plan changes are manual during the pilot; reply to any CareProof email to switch."}

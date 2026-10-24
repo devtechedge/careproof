@@ -5,6 +5,7 @@ import { planFor } from "./plans";
 import { cleanText, isEmail, normalizeSiteUrl } from "./validation";
 import { hashPassword, verifyPassword } from "./password";
 import { currentPeriod, overallFor, snapshotChecks, summarizeChecks } from "./report";
+import { logEvent } from "./events";
 
 export type ServiceResult<T = undefined> =
   | ({ ok: true } & (T extends undefined ? { data?: undefined } : { data: T }))
@@ -58,6 +59,7 @@ export async function createAccount(input: {
       intendedPlan: intended && intended !== "starter" ? intended : null,
     },
   });
+  logEvent("signup_completed", account.id);
   return { ok: true, data: { accountId: account.id } };
 }
 
@@ -72,6 +74,7 @@ export async function authenticate(
   if (!(await verifyPassword(password, account.passwordHash))) {
     return fail("Email or password is incorrect.");
   }
+  if (account.isDemo) logEvent("demo_login", account.id);
   return { ok: true, data: { accountId: account.id } };
 }
 
@@ -390,6 +393,7 @@ export async function generateReport(
       },
     });
   });
+  logEvent("report_generated", accountId);
   return { ok: true, data: { reportId: report.id, publicId: report.publicId } };
 }
 
