@@ -130,7 +130,7 @@ export function PrintButton({ label }: { label: string }) {
 }
 
 export function WaitlistForm() {
-  const [state, action, pending] = useActionState(joinWaitlist, undefined);
+  const [state, action] = useActionState(joinWaitlist, undefined);
   if (state?.ok) {
     return (
       <p className="text-sm text-[var(--ink)]" role="status">

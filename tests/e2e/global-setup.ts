@@ -16,4 +16,6 @@ export default async function globalSetup(): Promise<void> {
     stdio: "pipe",
     env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL_TEST ?? "" },
   });
+  const { clearTestRateLimits } = await import("./db");
+  await clearTestRateLimits();
 }

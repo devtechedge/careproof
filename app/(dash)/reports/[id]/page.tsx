@@ -50,7 +50,10 @@ export default async function ReportDetailPage({
             {periodLabel(report.period)} report
           </h1>
           <p className="mt-1 text-sm text-[var(--muted)]">
-            {items.length} sites - generated{" "}
+            {report.scopeType === "portfolio"
+              ? `Internal portfolio report - all ${items.length} site${items.length === 1 ? "" : "s"} (do not send to a single client)`
+              : `Client report - ${report.scopeLabel || items.map((i) => i.siteLabel).join(", ")} (${items.length} site${items.length === 1 ? "" : "s"})`}
+            {" - generated "}
             {new Date(report.createdAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
           </p>
         </div>
