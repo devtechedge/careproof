@@ -12,10 +12,10 @@ Updated: 2026-10-24 (end of session 3, security-hardening branch, NOT merged).
 
 ## Next session (local, no approval needed)
 
-1. Re-check run of the deployed product post-merge (health, sample report, demo read-only live).
-2. Report diffing vs previous period ("what changed" section) - top of the feature backlog, gated on pilot demand.
-3. Scheduled re-checks (cron-style) only after pilot demand + architecture check.
-4. Email sending only if pilots ask for it.
+1. Report diffing vs previous period ("what changed" section) - top of the feature backlog, gated on pilot demand.
+2. Scheduled re-checks (cron-style) only after pilot demand + architecture check.
+3. Email sending only if pilots ask for it.
+4. Visual QA: done 2026-10-24 (mobile/tablet/print clean after fixes); re-run after any layout change.
 
 ## Standing weekly goals (unchanged; clock starts when outreach is approved)
 

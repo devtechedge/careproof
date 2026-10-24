@@ -42,3 +42,8 @@ Days below assume start day D0 (to be set on approval).
 - Fact: competitor pricing re-verified today (docs/COMPETITIVE_POSITIONING.md); one landing claim corrected as a result.
 - Fact: payment providers verified today (docs/BILLING_AND_MRR.md): Paddle + Lemon Squeezy both accept Indian sellers as MoR at 5% + 50c; Stripe India invite-only confirmed.
 - Funnel baseline unchanged: conversations 0, pilots 0, customers 0, MRR $0.
+
+### 2026-10-24 (session 6, trust pass deployed + visual QA + batch drafted)
+- Fact: trust pass deployed and verified live (scoped reports, honest semantics, plan journey, headers, robots/sitemap, 404). Funnel baseline unchanged: 0 conversations, 0 pilots, $0 MRR.
+- Fact: mobile/tablet/print QA executed with real browser automation on the live site. Found and fixed 3 real overflow defects (landing header, dash headers at 567px, dashboard/reports tables); re-verified all viewports overflow-free. Print emulation clean (no-print hidden, white background, table fits).
+- Fact: 15 first-touch drafts prepared in docs/outreach/BATCH_2026-10-24.md for Dev review. NOTHING SENT. Trigger-gated follow-ups (#14, #15) documented.
